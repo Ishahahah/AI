@@ -1,0 +1,176 @@
+package LAB;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.Scanner;
+public class magicsquare {
+	
+	
+
+	public class TicTacToe {
+	    // Define magic square constant
+	    private static final int[][] MAGIC_SQUARE = {
+	            {2, 9, 4},
+	            {7, 5, 3},
+	            {6, 1, 8}
+	    };
+
+	    // Game variables
+	    private static char[][] board = {
+	            {' ', ' ', ' '},
+	            {' ', ' ', ' '},
+	            {' ', ' ', ' '}
+	    };
+	    private static char humanPlayer = 'X';
+	    private static char computerPlayer = 'O';
+	    private static int moves = 0;
+
+	    public static void main(String[] args) {
+	        playGame();
+	    }
+
+	    // Display the game board
+	    private static void displayBoard() {
+	        for (int i = 0; i < 3; i++) {
+	            for (int j = 0; j < 3; j++) {
+	                System.out.print(board[i][j]);
+	                if (j < 2) {
+	                    System.out.print(" | ");
+	                }
+	            }
+	            System.out.println();
+	            if (i < 2) {
+	                System.out.println("---------");
+	            }
+	        }
+	        System.out.println();
+	    }
+
+	    // Check if a move is valid
+	    private static boolean isValidMove(int row, int col) {
+	        return row >= 0 && row < 3 && col >= 0 && col < 3 && board[row][col] == ' ';
+	    }
+
+	    // Check if a player has won
+	    private static boolean checkWin(char player) {
+	        List<Integer> playerMoves = new ArrayList<>();
+
+	        // Get the positions of the current player's moves
+	        for (int i = 0; i < 3; i++) {
+	            for (int j = 0; j < 3; j++) {
+	                if (board[i][j] == player) {
+	                    playerMoves.add(MAGIC_SQUARE[i][j]);
+	                }
+	            }
+	        }
+
+	        // Check if the sum of any row, column, or diagonal is 15 (magic number)
+	        for (int i = 0; i < 3; i++) {
+	            if (playerMoves.get(i) + playerMoves.get(i + 3) + playerMoves.get(i + 6) == 15) {
+	                return true;
+	            }
+	            if (playerMoves.get(i * 3) + playerMoves.get(i * 3 + 1) + playerMoves.get(i * 3 + 2) == 15) {
+	                return true;
+	            }
+	        }
+
+	        return playerMoves.get(0) + playerMoves.get(4) + playerMoves.get(8) == 15 ||
+	                playerMoves.get(2) + playerMoves.get(4) + playerMoves.get(6) == 15;
+	    }
+
+	    // Check if the game is over
+	    private static boolean isGameOver() {
+	        return moves >= 9 || checkWin(humanPlayer) || checkWin(computerPlayer);
+	    }
+
+	    // Human player's move
+	    private static void playerMove() {
+	        Scanner scanner = new Scanner(System.in);
+	        int row, col;
+	        System.out.print("Human Player " + humanPlayer + ", enter your move (row,column): ");
+	        row = scanner.nextInt();
+	        col = scanner.nextInt();
+
+	        if (!isValidMove(row, col)) {
+	            System.out.println("Invalid move. Please enter valid row and column.");
+	            return;
+	        }
+
+	        board[row][col] = humanPlayer;
+	        moves++;
+	    }
+
+	    // Computer player's move
+	    private static void computerMove() {
+	        System.out.println("Computer Player " + computerPlayer + " is making a move...");
+	        Random random = new Random();
+	        int row, col;
+	        do {
+	            row = random.nextInt(3);
+	            col = random.nextInt(3);
+	        } while (!isValidMove(row, col));
+
+	        board[row][col] = computerPlayer;
+	        moves++;
+	    }
+
+	    // Play the game
+	    private static void playGame() {
+	        displayBoard();
+
+	        while (!isGameOver()) {
+	            playerMove();
+	            displayBoard();
+	            if (checkWin(humanPlayer)) {
+	                System.out.println("Human Player " + humanPlayer + " wins!");
+	                break;
+	            }
+
+	            if (moves == 9) {
+	                System.out.println("It's a draw!");
+	                break;
+	            }
+
+	            computerMove();
+	            displayBoard();
+	            if (checkWin(computerPlayer)) {
+	                System.out.println("Computer Player " + computerPlayer + " wins!");
+	                break;
+	            }
+	        }
+	    }
+	}}
+
+
+
+
+
+The "magic square" method in the provided code is a way to determine winning conditions in the Tic Tac Toe game. In traditional Tic Tac Toe, winning conditions are typically defined by having three of the same symbol (either 'X' or 'O') in a row, column, or diagonal. However, in this implementation, the winning conditions are determined by the sum of the numbers in a specific pattern on the board.
+
+Here's how the magic square method works:
+
+### Magic Square
+The concept of a magic square is a mathematical construct where the sum of the numbers in each row, column, and diagonal is the same. In the context of the Tic Tac Toe game, the magic square is a 3x3 grid filled with numbers, where each number represents a position on the game board.
+
+```java
+private static final int[][] MAGIC_SQUARE = {
+    {2, 9, 4},
+    {7, 5, 3},
+    {6, 1, 8}
+};
+```
+
+### How it's Used
+1. When a player makes a move, their symbol ('X' or 'O') is placed on the board.
+2. Simultaneously, the corresponding number from the magic square is recorded for that position.
+3. When checking for a win, the sum of the numbers in each row, column, and diagonal is calculated.
+4. If any of these sums equals a specific value (in this case, 15, which is the magic constant for a 3x3 magic square), it means that the player has won.
+
+### Example
+Suppose the player has symbols 'X' placed on the board in positions (0,0), (1,1), and (2,2). The corresponding numbers from the magic square are 2, 5, and 8 respectively. The sum of these numbers (2 + 5 + 8 = 15) matches the magic constant, indicating a win.
+
+### Advantages
+Using the magic square method for determining winning conditions allows for a more flexible approach to defining win conditions. It's not limited to traditional row, column, or diagonal patterns, making it suitable for different variations of the game.
+
+### Conclusion
+The magic square method offers an alternative way to determine win conditions in Tic Tac Toe, providing an interesting twist on the classic game's rules. It adds a layer of complexity by introducing mathematical concepts into the gameplay logic.

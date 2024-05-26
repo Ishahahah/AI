@@ -1,0 +1,156 @@
+import java.util.HashSet;
+import java.util.Set;
+
+public class TicTacToe {
+    private static final String X = "X";
+    private static final String O = "O";
+    private static final String EMPTY = null;
+
+    public static String[][] initialBoard() {
+        return new String[][]{
+                {EMPTY, EMPTY, EMPTY},
+                {EMPTY, EMPTY, EMPTY},
+                {EMPTY, EMPTY, EMPTY}
+        };
+    }
+
+    public static String player(String[][] board) {
+        int countX = 0, countO = 0;
+        for (String[] row : board) {
+            for (String cell : row) {
+                if (cell != null && cell.equals(X)) {
+                    countX++;
+                } else if (cell != null && cell.equals(O)) {
+                    countO++;
+                }
+            }
+        }
+        return countX == countO ? X : O;
+    }
+
+    public static Set<String> actions(String[][] board) {
+        Set<String> actions = new HashSet<>();
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == null) {
+                    actions.add(i + "," + j);
+                }
+            }
+        }
+        return actions;
+    }
+
+    public static String[][] result(String[][] board, String action) {
+        String[][] newBoard = new String[3][3];
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                newBoard[i][j] = board[i][j];
+            }
+        }
+        String currentPlayer = player(board);
+        String[] coordinates = action.split(",");
+        int row = Integer.parseInt(coordinates[0]);
+        int col = Integer.parseInt(coordinates[1]);
+        newBoard[row][col] = currentPlayer;
+        return newBoard;
+    }
+
+    public static String winner(String[][] board) {
+        for (int i = 0; i < 3; i++) {
+            if (board[i][0] != null && board[i][0].equals(board[i][1]) && board[i][0].equals(board[i][2])) {
+                return board[i][0];
+            }
+            if (board[0][i] != null && board[0][i].equals(board[1][i]) && board[0][i].equals(board[2][i])) {
+                return board[0][i];
+            }
+        }
+        if (board[0][0] != null && board[0][0].equals(board[1][1]) && board[0][0].equals(board[2][2])) {
+            return board[0][0];
+        }
+        if (board[0][2] != null && board[0][2].equals(board[1][1]) && board[0][2].equals(board[2][0])) {
+            return board[0][2];
+        }
+        return null;
+    }
+
+    public static boolean terminal(String[][] board) {
+        return winner(board) != null || actions(board).isEmpty();
+    }
+
+    public static int utility(String[][] board) {
+        String winner = winner(board);
+        if (winner != null) {
+            return winner.equals(X) ? 1 : -1;
+        } else {
+            return 0;
+        }
+    }
+
+    public static int maxValue(String[][] board, int alpha, int beta) {
+        if (terminal(board)) {
+            return utility(board);
+        }
+        int v = Integer.MIN_VALUE;
+        for (String action : actions(board)) {
+            v = Math.max(v, minValue(result(board, action), alpha, beta));
+            alpha = Math.max(alpha, v);
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        return v;
+    }
+
+    public static int minValue(String[][] board, int alpha, int beta) {
+        if (terminal(board)) {
+            return utility(board);
+        }
+        int v = Integer.MAX_VALUE;
+        for (String action : actions(board)) {
+            v = Math.min(v, maxValue(result(board, action), alpha, beta));
+            beta = Math.min(beta, v);
+            if (alpha >= beta) {
+                break;
+            }
+        }
+        return v;
+    }
+
+    public static String[] minimax(String[][] board) {
+        if (terminal(board)) {
+            return null;
+        }
+        String currentPlayer = player(board);
+        String[] optimalAction = null;
+        int alpha = Integer.MIN_VALUE;
+        int beta = Integer.MAX_VALUE;
+        if (currentPlayer.equals(X)) {
+            int v = Integer.MIN_VALUE;
+            for (String action : actions(board)) {
+                int newV = minValue(result(board, action), alpha, beta);
+                if (newV > v) {
+                    v = newV;
+                    optimalAction = action.split(",");
+                }
+                alpha = Math.max(alpha, v);
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+        } else if (currentPlayer.equals(O)) {
+            int v = Integer.MAX_VALUE;
+            for (String action : actions(board)) {
+                int newV = maxValue(result(board, action), alpha, beta);
+                if (newV < v) {
+                    v = newV;
+                    optimalAction = action.split(",");
+                }
+                beta = Math.min(beta, v);
+                if (alpha >= beta) {
+                    break;
+                }
+            }
+        }
+        return optimalAction;
+    }
+}

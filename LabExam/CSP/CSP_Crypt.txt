@@ -1,0 +1,141 @@
+import java.util.Scanner;
+
+public class CSP_crypt {
+
+    static class Node {
+        char letter; // Character representing a unique letter in the strings
+        int value;   // Value assigned to the letter
+    }
+
+    // Array to track which digits are used
+    static int[] use = new int[10];
+
+    // Check if the current permutation of values solves the puzzle
+    static int isValid(Node[] nodeList, int count, String s1, String s2, String s3) {
+        int val1 = 0, val2 = 0, val3 = 0, m = 1, j, i;
+
+        // Calculate numerical value of string s1
+        for (i = s1.length() - 1; i >= 0; i--) {
+            char ch = s1.charAt(i);
+            for (j = 0; j < count; j++)
+                if (nodeList[j].letter == ch)
+                    break;
+            val1 += m * nodeList[j].value;
+            m *= 10;
+        }
+
+        // Calculate numerical value of string s2
+        m = 1;
+        for (i = s2.length() - 1; i >= 0; i--) {
+            char ch = s2.charAt(i);
+            for (j = 0; j < count; j++)
+                if (nodeList[j].letter == ch)
+                    break;
+            val2 += m * nodeList[j].value;
+            m *= 10;
+        }
+
+        // Calculate numerical value of string s3
+        m = 1;
+        for (i = s3.length() - 1; i >= 0; i--) {
+            char ch = s3.charAt(i);
+            for (j = 0; j < count; j++)
+                if (nodeList[j].letter == ch)
+                    break;
+            val3 += m * nodeList[j].value;
+            m *= 10;
+        }
+
+        // Check if the sum of s1 and s2 equals s3
+        if (val3 == (val1 + val2))
+            return 1;
+        return 0;
+    }
+
+    // Generate permutations of digit assignments to letters
+    static boolean permutation(int count, Node[] nodeList, int n, String s1, String s2, String s3) {
+        if (n == count - 1) {
+            for (int i = 0; i < 10; i++) {
+                if (use[i] == 0) {
+                    nodeList[n].value = i;
+                    if (isValid(nodeList, count, s1, s2, s3) == 1) {
+                        System.out.print("Solution found:");
+                        for (int j = 0; j < count; j++)
+                            System.out.print(" " + nodeList[j].letter + " = " + nodeList[j].value);
+                        System.out.println();
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        for (int i = 0; i < 10; i++) {
+            if (use[i] == 0) {
+                nodeList[n].value = i;
+                use[i] = 1;
+                if (permutation(count, nodeList, n + 1, s1, s2, s3))
+                    return true;
+                use[i] = 0;
+            }
+        }
+        return false;
+    }
+
+    // Solve the cryptarithmetic puzzle
+    static boolean solvePuzzle(String s1, String s2, String s3) {
+        int uniqueChar = 0;
+        int len1 = s1.length();
+        int len2 = s2.length();
+        int len3 = s3.length();
+
+        // Frequency array to count occurrences of each letter
+        int[] freq = new int[26];
+
+        for (int i = 0; i < len1; i++)
+            ++freq[s1.charAt(i) - 'A'];
+        for (int i = 0; i < len2; i++)
+            ++freq[s2.charAt(i) - 'A'];
+        for (int i = 0; i < len3; i++)
+            ++freq[s3.charAt(i) - 'A'];
+
+        // Count the number of unique characters
+        for (int i = 0; i < 26; i++)
+            if (freq[i] > 0)
+                uniqueChar++;
+
+        // If there are more than 10 unique characters, the puzzle is invalid
+        if (uniqueChar > 10) {
+            System.out.println("Invalid strings");
+            return false;
+        }
+
+        // Create an array of Node objects for each unique character
+        Node[] nodeList = new Node[uniqueChar];
+        for (int i = 0, j = 0; i < 26; i++) {
+            if (freq[i] > 0) {
+                nodeList[j] = new Node();
+                nodeList[j].letter = (char) (i + 'A');
+                j++;
+            }
+        }
+        return permutation(uniqueChar, nodeList, 0, s1, s2, s3);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        // Take user input for the three strings
+        System.out.println("Enter the first string:");
+        String s1 = sc.nextLine().toUpperCase();
+        System.out.println("Enter the second string:");
+        String s2 = sc.nextLine().toUpperCase();
+        System.out.println("Enter the result string:");
+        String s3 = sc.nextLine().toUpperCase();
+
+        // Solve the puzzle
+        if (!solvePuzzle(s1, s2, s3))
+            System.out.println("No solution");
+    }
+}
+
+e.g -> SEND + MORE = MONEY

@@ -1,0 +1,36 @@
+% Knowledge Base
+symptom(fever).
+symptom(cough).
+symptom(rash).
+symptom(headache).
+symptom(fatigue).
+symptom(sore_throat).
+symptom(body_aches).
+symptom(chills).
+symptom(congestion).
+symptom(runny_nose).
+symptom(nausea).
+symptom(vomiting).
+
+% Define diseases and their symptoms
+disease(flu, [fever, cough, sore_throat, body_aches, fatigue, chills, congestion, headache]).
+disease(measles, [fever, cough, rash, runny_nose, red_eyes, sore_throat]).
+disease(cold, [fever, cough, congestion, runny_nose, sore_throat, body_aches]).
+disease(acute_bronchitis, [cough, fatigue, shortness_of_breath, chest_discomfort, mild_fever]).
+disease(pneumonia, [cough, fever, chills, shortness_of_breath, chest_pain, fatigue, nausea, vomiting]).
+
+% Rules for diagnosis
+diagnosis(Disease) :-
+    findall(Symptom, symptom(Symptom), Symptoms),
+    disease(Disease, DiseaseSymptoms),
+    subset(DiseaseSymptoms, Symptoms),
+    write('You may have '), write(Disease), write(' based on the symptoms provided.').
+
+% Subset predicate to check if all elements of a list are present in another list
+subset([], _).
+subset([H|T], Set) :-
+    member(H, Set),
+    subset(T, Set).
+
+% Querying for diagnosis
+% Example query: diagnosis(Disease).

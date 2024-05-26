@@ -1,0 +1,162 @@
+import java.util.*;
+
+// Node class to represent a state in the search space
+class Node2 {
+    int x;  // Water amount in the first jug
+    int y;  // Water amount in the second jug
+    int cost;  // Cost to reach this node
+    int heuristic;  // Heuristic value (estimated cost to reach the goal)
+    Node2 parent;  // Parent node
+
+    // Constructor
+    public Node2(int x, int y, int cost, int heuristic, Node2 parent) {
+        this.x = x;
+        this.y = y;
+        this.cost = cost;
+        this.heuristic = heuristic;
+        this.parent = parent;
+    }
+}
+
+// Custom comparator to order nodes by their total cost (cost + heuristic)
+class NodeComparator implements Comparator<Node2> {
+    public int compare(Node2 n1, Node2 n2) {
+        return (n1.cost + n1.heuristic) - (n2.cost + n2.heuristic);
+    }
+}
+
+public class AStar_WaterJug {
+    static boolean[][] visited;  // Matrix to track visited states
+    static int totalNodesVisited = 0;  // Count of total Nodes explored
+
+    // Solve the water jug problem using A* algorithm
+    static void solveAStar(int jug1Capacity, int jug2Capacity, int target) {
+        visited = new boolean[jug1Capacity + 1][jug2Capacity + 1]; // Initialize visited array
+
+        PriorityQueue<Node2> pq = new PriorityQueue<>(new NodeComparator());
+
+        // Add the initial state to the priority queue
+        pq.add(new Node2(0, 0, 0, heuristic(0, 0, target), null));
+
+        while (!pq.isEmpty()) {
+            Node2 current = pq.poll();  // Get the Node2 with the lowest total cost
+            int curX = current.x;
+            int curY = current.y;
+
+            // Check if the goal state is reached
+            if (curX == target || curY == target) {
+                printSolution(current);  // Print the solution path
+                return;
+            }
+
+            // Skip visited Nodes
+            if (visited[curX][curY]) {
+                continue;
+            }
+            visited[curX][curY] = true;  // Mark current state as visited
+            totalNodesVisited++;
+
+            // Generate and enqueue new states by filling and emptying the jugs
+            enqueueState(pq, curX, curY, jug1Capacity, jug2Capacity, target, current);
+        }
+
+        System.out.println("No solution");
+    }
+
+    // Heuristic function: Manhattan distance between (x, y) and the target
+    static int heuristic(int x, int y, int target) {
+        return Math.abs(x - target) + Math.abs(y - target);
+    }
+
+    // Enqueue new states after performing valid actions
+    static void enqueueState(PriorityQueue<Node2> pq, int curX, int curY, int jug1Capacity, int jug2Capacity, int target, Node2 parent) {
+        // Fill the jugs
+        pq.add(new Node2(jug1Capacity, curY, parent.cost + 1, heuristic(jug1Capacity, curY, target), parent));
+        pq.add(new Node2(curX, jug2Capacity, parent.cost + 1, heuristic(curX, jug2Capacity, target), parent));
+
+        // Empty the jugs
+        pq.add(new Node2(0, curY, parent.cost + 1, heuristic(0, curY, target), parent));
+        pq.add(new Node2(curX, 0, parent.cost + 1, heuristic(curX, 0, target), parent));
+
+        // Pour water from one jug to another
+        int pourXToY = Math.min(curX + curY, jug2Capacity);
+        int pourYToX = Math.min(curX + curY, jug1Capacity);
+        pq.add(new Node2(curX - (pourXToY - curY), pourXToY, parent.cost + 1, heuristic(curX - (pourXToY - curY), pourXToY, target), parent));
+        pq.add(new Node2(pourYToX, curY - (pourYToX - curX), parent.cost + 1, heuristic(pourYToX, curY - (pourYToX - curX), target), parent));
+    }
+
+    // Print the solution path
+    static void printSolution(Node2 node) {
+        Stack<Node2> path = new Stack<>();
+        while (node != null) {
+            path.push(node);
+            node = node.parent;
+        }
+
+        while (!path.isEmpty()) {
+            Node2 n = path.pop();
+            System.out.println("(" + n.x + ", " + n.y + ")");
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Get user input for jug capacities and the desired quantity of water
+        System.out.print("Enter the capacity of the first jug: ");
+        int jug1Capacity = scanner.nextInt();
+
+        System.out.print("Enter the capacity of the second jug: ");
+        int jug2Capacity = scanner.nextInt();
+
+        System.out.print("Enter the desired quantity of water: ");
+        int target = scanner.nextInt();
+
+        solveAStar(jug1Capacity, jug2Capacity, target);  // Solve the water jug problem using A*
+        System.out.println("Total Nodes visited: " + totalNodesVisited);  // Print the total visited Nodes
+    }
+}
+
+
+/* Heuristic is an estimated cost to reach the goal state from a given state in a search algorithm. In the context of the A* algorithm, heuristic function provides an informed estimate of the cost to reach the goal state from the current state. The heuristic function used in the A* algorithm is admissible if it never overestimates the true cost to reach the goal.
+
+In the water jug problem, the heuristic function calculates the Manhattan distance between the current state and the goal state. The Manhattan distance is the sum of the absolute differences between the x and y coordinates of the current state and the goal state.
+
+For example, if the goal state is to have 2 units of water in one of the jugs, and the current state is (0, 0), the heuristic value would be the Manhattan distance between (0, 0) and (0, 2), which is 2.
+
+Using the heuristic function helps guide the search towards the goal state more efficiently by prioritizing states that are closer to the goal, ultimately reducing the search space and improving the algorithm's performance.
+
+Node2 Class:
+
+This class represents a state in the search space. Each node contains the following attributes:
+x: Water amount in the first jug.
+y: Water amount in the second jug.
+cost: Cost to reach this node.
+heuristic: Heuristic value (estimated cost to reach the goal).
+parent: Reference to the parent node.
+NodeComparator Class:
+
+Implements a custom comparator to order nodes by their total cost (cost + heuristic). This comparator is used for the priority queue in the A* algorithm.
+solveAStar Method:
+
+This method implements the A* algorithm to find the optimal solution.
+It initializes a priority queue to store nodes, adds the initial state to the queue, and continues processing nodes until the goal state is reached or no solution is found.
+It tracks visited states and the total number of nodes explored.
+At each iteration, it dequeues the node with the lowest total cost, explores its neighbors, and enqueues new states into the priority queue.
+heuristic Method:
+
+Calculates the heuristic value for a given state. In this case, it computes the Manhattan distance between the current state and the target state. The Manhattan distance is the sum of the absolute differences between corresponding coordinates.
+enqueueState Method:
+
+Generates and enqueues new states after performing valid actions such as filling, emptying, or pouring water between jugs.
+printSolution Method:
+
+Prints the solution path by tracing back from the goal node to the initial node using the parent references.
+Main Method:
+
+Reads user input for jug capacities and the desired quantity of water.
+Calls the solveAStar method to solve the water jug problem using the A* algorithm.
+Prints the total number of nodes visited during the search process.
+Overall, this code efficiently explores the search space using the A* algorithm, prioritizing nodes with lower total costs (cost + heuristic) to find the optimal solution to the water jug problem.
+*/
+

@@ -1,0 +1,127 @@
+import java.util.*;
+
+class State {
+    int missionaries; // Number of missionaries on the original side
+    int cannibals;    // Number of cannibals on the original side
+    int boatPosition; // 1 for the original side, 0 for the other side
+    State parentState; // Previous state leading to this state
+
+    // Constructor to initialize state
+    public State(int missionaries, int cannibals, int boatPosition, State parentState) {
+        this.missionaries = missionaries;
+        this.cannibals = cannibals;
+        this.boatPosition = boatPosition;
+        this.parentState = parentState;
+    }
+
+    // Check if the current state is valid
+    public boolean isValid() {
+        if (missionaries < 0 || cannibals < 0 || missionaries > 3 || cannibals > 3) {
+            return false; // Ensure counts are within valid bounds
+        }
+
+        // Ensure missionaries are not outnumbered by cannibals on either side
+        if ((missionaries < cannibals && missionaries > 0) || (3 - missionaries < 3 - cannibals && 3 - missionaries > 0)) {
+            return false;
+        }
+
+        return true; // State is valid if no rules are violated
+    }
+
+    // Check if the current state is the goal state
+    public boolean isGoal() {
+        return missionaries == 0 && cannibals == 0 && boatPosition == 0; // Goal state: all missionaries and cannibals on the other side
+    }
+
+    // Generate possible next states from the current state
+    public List<State> getNextStates() {
+        List<State> nextStates = new ArrayList<>();
+
+        int newBoatPosition = 1 - boatPosition; // Move the boat to the other side
+
+        // Generate all valid combinations of missionaries and cannibals to move
+        for (int m = 0; m <= 2; m++) {
+            for (int c = 0; c <= 2; c++) {
+                if (m + c >= 1 && m + c <= 2) { // Boat can carry 1 or 2 people
+                    int newMissionaries = missionaries - m * boatPosition + m * newBoatPosition;
+                    int newCannibals = cannibals - c * boatPosition + c * newBoatPosition;
+
+                    State nextState = new State(newMissionaries, newCannibals, newBoatPosition, this);
+
+                    if (nextState.isValid()) {
+                        nextStates.add(nextState); // Add valid next state to the list
+                    }
+                }
+            }
+        }
+
+        return nextStates; // Return list of valid next states
+    }
+}
+
+public class BFS_MC {
+    public static void main(String[] args) {
+        bfs(); // Start the BFS search
+    }
+
+    // BFS search to find the solution
+    public static void bfs() {
+        Queue<State> queue = new LinkedList<>(); // Queue for BFS
+        Set<State> visited = new HashSet<>(); // Set to track visited states
+
+        State initialState = new State(3, 3, 1, null); // Initial state with all missionaries and cannibals on the original side
+        queue.add(initialState); // Add initial state to the queue
+        visited.add(initialState); // Mark initial state as visited
+
+        while (!queue.isEmpty()) {
+            State current = queue.poll(); // Get the next state from the queue
+
+            if (current.isGoal()) {
+                printSolution(current); // Print the solution if goal state is reached
+                return;
+            }
+
+            List<State> nextStates = current.getNextStates(); // Generate next states from the current state
+
+            for (State nextState : nextStates) {
+                if (!visited.contains(nextState)) {
+                    queue.add(nextState); // Add new state to the queue
+                    visited.add(nextState); // Mark new state as visited
+                }
+            }
+        }
+
+        System.out.println("No solution found."); // Print message if no solution is found
+    }
+
+    // Print the solution path from the initial state to the goal state
+    public static void printSolution(State goalState) {
+        List<State> path = new ArrayList<>();
+
+        while (goalState != null) {
+            path.add(goalState); // Add each state to the path
+            goalState = goalState.parentState; // Move to the parent state
+        }
+
+        Collections.reverse(path); // Reverse the path to start from the initial state
+
+        for (State state : path) {
+            if (state.parentState != null) { // Skip printing the initial state move
+                int missionariesMoved = Math.abs(state.missionaries - state.parentState.missionaries);
+                int cannibalsMoved = Math.abs(state.cannibals - state.parentState.cannibals);
+                String boatDirection = state.boatPosition == 1 ? "to the original side" : "to the other side";
+
+                // Print the move and state details
+                System.out.println("Move " + missionariesMoved + " missionaries and " + cannibalsMoved + " cannibals " + boatDirection);
+                
+            }
+
+            // Print the state details
+            System.out.println("(" + state.missionaries + " missionaries, " + state.cannibals + " cannibals, boat on " + (state.boatPosition == 1 ? "original side" : "other side") + ")");
+       
+        }
+
+        // Indicate that the goal state is reached
+        System.out.println("Goal State Reached!");
+    }
+}

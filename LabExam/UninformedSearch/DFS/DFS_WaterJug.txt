@@ -1,0 +1,164 @@
+import java.util.*;
+
+public class WaterJugDFS {
+    // Class to represent the state of the jugs
+    static class State {
+        int jar1, jar2;
+
+        State(int j1, int j2) {
+            this.jar1 = j1;
+            this.jar2 = j2;
+        }
+
+        @Override
+        public String toString() {
+            return jar1 + "," + jar2; // Represent state as a string (jar1, jar2)
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            State state = (State) o;
+            return jar1 == state.jar1 && jar2 == state.jar2;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(jar1, jar2); // Generate hash code for efficient storage
+        }
+    }
+
+    // Function to generate all possible next states from the current state
+    public static List<State> generateNextStates(State state, int capacityJar1, int capacityJar2) {
+        List<State> nextStates = new ArrayList<>();
+        
+        // Fill jar1 to its capacity
+        nextStates.add(new State(capacityJar1, state.jar2));
+        
+        // Fill jar2 to its capacity
+        nextStates.add(new State(state.jar1, capacityJar2));
+        
+        // Empty jar1
+        nextStates.add(new State(0, state.jar2));
+        
+        // Empty jar2
+        nextStates.add(new State(state.jar1, 0));
+        
+        // Pour water from jar1 to jar2
+        int pourAmount = Math.min(state.jar1, capacityJar2 - state.jar2);
+        nextStates.add(new State(state.jar1 - pourAmount, state.jar2 + pourAmount));
+        
+        // Pour water from jar2 to jar1
+        pourAmount = Math.min(state.jar2, capacityJar1 - state.jar1);
+        nextStates.add(new State(state.jar1 + pourAmount, state.jar2 - pourAmount));
+        
+        return nextStates; // Return list of next possible states
+    }
+
+    // DFS function to find a path to the target state
+    public static boolean dfs(State startState, Set<String> visited, Stack<State> path, int target, int capacityJar1, int capacityJar2) {
+        // Check if the current state is the target state
+        if (startState.jar1 == target || startState.jar2 == target) {
+            path.push(startState); // Add the current state to the solution path
+            return true; // Return true to indicate that the target state is reached
+        }
+
+        // Create a unique string representation of the current state
+        String stateHash = startState.toString();
+        
+        // If the state is already visited, return false to backtrack
+        if (visited.contains(stateHash)) {
+            return false;
+        }
+
+        // Mark the state as visited
+        visited.add(stateHash);
+
+        // Generate all possible next states from the current state
+        for (State nextState : generateNextStates(startState, capacityJar1, capacityJar2)) {
+            // Recursively perform DFS on the next state
+            if (dfs(nextState, visited, path, target, capacityJar1, capacityJar2)) {
+                // If a path to the target is found, push the current state to the path and return true
+                path.push(startState);
+                return true;
+            }
+        }
+
+        // If no path is found, return false
+        return false;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Get user input for jug capacities and the desired quantity of water
+        System.out.print("Enter the capacity of the first jug: ");
+        int capacityJar1 = scanner.nextInt();
+
+        System.out.print("Enter the capacity of the second jug: ");
+        int capacityJar2 = scanner.nextInt();
+
+        System.out.print("Enter the desired quantity of water: ");
+        int desiredQuantity = scanner.nextInt();
+
+        // Create the initial state with both jugs empty
+        State startState = new State(0, 0);
+        // Set to track visited states
+        Set<String> visited = new HashSet<>();
+        // Stack to store the solution path
+        Stack<State> path = new Stack<>();
+
+        // Print the problem statement
+        System.out.println("\n**Water Jug Problem Using DFS**\n");
+        System.out.println("Input - " + capacityJar1 + "L and " + capacityJar2 + "L Jars");
+        System.out.println("Output - " + desiredQuantity + "L\n");
+        System.out.println("Path from initial state to solution state:");
+        System.out.println("\nJar1\tJar2");
+
+        // Perform DFS to find the solution path
+        if (dfs(startState, visited, path, desiredQuantity, capacityJar1, capacityJar2)) {
+            // If a solution is found, print the path
+            while (!path.isEmpty()) {
+                State state = path.pop();
+                System.out.println(state.jar1 + "\t" + state.jar2);
+            }
+        } else {
+            // If no solution is found, print a message
+            System.out.println("No solution found.");
+        }
+    }
+}
+
+/* How This Code Implements DFS:
+Initial Call:
+
+The main method initializes the starting state and sets up the necessary structures (visited set and path stack).
+It calls the dfs function to start the depth-first search from the initial state.
+DFS Recursive Exploration:
+
+The dfs function checks if the current state matches the target.
+It marks the current state as visited.
+It recursively explores all possible next states generated from the current state.
+If a path to the target is found, it pushes the current state onto the stack and returns true.
+Backtracking:
+
+DFS continues exploring until it finds the target state or exhausts all possibilities.
+The path is reconstructed by pushing states onto the stack as the recursion unwinds.
+By following this approach, the code explores all possible paths from the initial state to the target state using DFS, ensuring it finds a solution if one exists.
+
+Detailed Explanation:
+State Representation:
+
+The State class represents the state of the two jugs (4-liter jug and 3-liter jug). It includes methods to compare states and generate hash codes, which are essential for storing states in a set.
+Next State Generation:
+
+The generateNextStates method generates all possible states that can be reached from the current state. These include filling, emptying, and transferring water between the jugs.
+DFS Implementation:
+
+The dfs method performs the DFS algorithm.
+It checks if the current state is the target state (i.e., one of the jugs contains the desired amount of water).
+It uses a set (visited) to keep track of visited states to avoid revisiting them and falling into infinite loops.
+For each state, it explores all possible next states recursively.
+If a path to the target state is found, it backtracks, storing the path in a stack (path).
+*/

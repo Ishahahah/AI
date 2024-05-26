@@ -1,0 +1,166 @@
+import java.util.*;
+
+// Define a class to represent the state of the problem
+class State {
+    int missionaries; // Number of missionaries on the current side
+    int cannibals; // Number of cannibals on the current side
+    int boatPosition; // Position of the boat (0 for the original side, 1 for the other side)
+    State ancestor; // Reference to the previous state (ancestor)
+
+    // Constructor to initialize the state
+    public State(int missionaries, int cannibals, int boatPosition, State ancestor) {
+        this.missionaries = missionaries;
+        this.cannibals = cannibals;
+        this.boatPosition = boatPosition;
+        this.ancestor = ancestor;
+    }
+
+    // Check if the current state is valid
+    public boolean isValid() {
+        // Ensure no negative or more than 3 missionaries or cannibals on either side
+        if (missionaries < 0 || cannibals < 0 || missionaries > 3 || cannibals > 3) {
+            return false;
+        }
+
+        // Check if missionaries are outnumbered by cannibals on either side
+        return (missionaries >= cannibals || missionaries == 0) && (missionaries <= cannibals || missionaries == 3);
+    }
+
+    // Check if the current state is the goal state
+    public boolean isGoal() {
+        return missionaries == 0 && cannibals == 0 && boatPosition == 0;
+    }
+
+    // Get the next possible states from the current state
+    public List<State> getNextStates() {
+        List<State> nextStates = new ArrayList<>();
+
+        // Determine the new boat position
+        int newBoatPosition = 1 - boatPosition; 
+
+        // Generate all possible combinations of missionaries and cannibals to move
+        for (int m = 0; m <= 2; m++) {
+            for (int c = 0; c <= 2; c++) {
+                // Ensure at least one person is moving but not more than two
+                if (m + c >= 1 && m + c <= 2) {
+                    // Calculate the new number of missionaries and cannibals on both sides
+                    int newMissionaries = missionaries - m * boatPosition + m * newBoatPosition;
+                    int newCannibals = cannibals - c * boatPosition + c * newBoatPosition;
+
+                    // Create the new state and add it to the list if it's valid
+                    State nextState = new State(newMissionaries, newCannibals, newBoatPosition, this);
+                    if (nextState.isValid()) {
+                        nextStates.add(nextState);
+                    }
+                }
+            }
+        }
+
+        return nextStates;
+    }
+
+    // Override equals method to compare states
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        State state = (State) obj;
+        return missionaries == state.missionaries && cannibals == state.cannibals && boatPosition == state.boatPosition;
+    }
+
+    // Override hashCode method for hashing
+    @Override
+    public int hashCode() {
+        return Objects.hash(missionaries, cannibals, boatPosition);
+    }
+}
+
+public class DFS_MC {
+    public static void main(String[] args) {
+        dfs();
+    }
+
+    // Depth-First Search (DFS) algorithm
+    public static void dfs() {
+        Stack<State> stack = new Stack<>(); // Stack to store states to explore
+        Set<State> visitedStates = new HashSet<>(); // Set to store visited states
+
+        State initialState = new State(3, 3, 1, null); // Start from the initial state
+        stack.push(initialState);
+
+        // Continue until the stack is empty (all states explored)
+        while (!stack.isEmpty()) {
+            State current = stack.pop(); // Get the current state from the stack
+
+            if (current.isGoal()) { // Check if the goal state is reached
+                System.out.println("Goal state reached!");
+                printSolution(current); // Print the solution path
+                return;
+            }
+
+            visitedStates.add(current); // Mark the current state as visited
+
+            // Generate next states and push them onto the stack if not visited before
+            List<State> nextStates = current.getNextStates();
+            for (State nextState : nextStates) {
+                if (!visitedStates.contains(nextState)) {
+                    stack.push(nextState);
+                }
+            }
+        }
+
+        System.out.println("No solution found."); // If the stack becomes empty without reaching the goal state
+    }
+
+    // Print the solution path from the goal state to the initial state
+    public static void printSolution(State goalState) {
+        List<State> path = new ArrayList<>();
+
+        // Traverse back from the goal state to the initial state
+        while (goalState != null) {
+            path.add(goalState);
+            goalState = goalState.ancestor;
+        }
+
+        // Print each state in the solution path
+        for (int i = path.size() - 1; i >= 0; i--) {
+            State state = path.get(i);
+            String boatSide = state.boatPosition == 1 ? "original side" : "other side";
+            String action = i == 0 ? "initial state" : "Move " + Math.abs(path.get(i - 1).missionaries - state.missionaries) + " missionaries and " + Math.abs(path.get(i - 1).cannibals - state.cannibals) + " cannibals";
+            System.out.println("(" + state.missionaries + " missionaries, " + state.cannibals + " cannibals, boat on " + boatSide + ")");
+            System.out.println(action);
+        }
+        System.out.println("Goal State Reached!");
+    }
+}
+/*Sure, here's a detailed explanation of the Depth-First Search (DFS) algorithm implemented in the provided code:
+
+1. **Initialization**:
+   - We start by defining a `Stack<State>` to store the states we need to explore. We use a stack because DFS is inherently recursive, and a stack allows us to mimic the recursion behavior iteratively.
+   - We also initialize a `Set<State>` called `visitedStates` to keep track of the states we have already visited.
+
+2. **Define the State Class**:
+   - The `State` class represents the state of the problem at any given moment. It holds the number of missionaries, cannibals, and the position of the boat. It also has a reference to its ancestor state (the state from which it was derived).
+   - The class provides methods to check if the state is valid, if it's the goal state, and to generate the next possible states.
+
+3. **DFS Function**:
+   - The `dfs` function is the heart of the DFS algorithm. It starts by pushing the initial state (3 missionaries, 3 cannibals, boat on the original side) onto the stack.
+   - The function runs a loop until the stack is empty or the goal state is reached.
+   - In each iteration of the loop, it pops a state from the stack.
+   - If the popped state is the goal state, it prints the solution path and exits.
+   - Otherwise, it marks the current state as visited and generates its next possible states.
+   - For each next state generated, if it hasn't been visited before, it pushes it onto the stack.
+
+4. **Generate Next States**:
+   - The `getNextStates` method in the `State` class generates all possible valid next states from the current state.
+   - It iterates over all possible combinations of missionaries and cannibals to move (from 0 to 2 for each) and calculates the resulting states.
+   - For each valid state generated, it creates a new `State` object and adds it to the list of next states.
+
+5. **Print Solution**:
+   - When the goal state is reached, the `printSolution` function is called to print the solution path.
+   - It starts by tracing back from the goal state to the initial state, adding each state to a list called `path`.
+   - Then, it iterates over the `path` list in reverse order (from the goal state to the initial state) and prints each state along with the action taken to reach it.
+   - The action is either "initial state" (for the initial state) or "Move x missionaries and y cannibals" (for subsequent states).
+   - Finally, it prints "Goal State Reached!" to indicate that the goal state has been reached.
+
+This DFS algorithm explores the state space of the problem systematically, moving from one state to another until it finds the goal state. It's an effective approach for solving problems with a large search space, like the Missionaries and Cannibals problem. */

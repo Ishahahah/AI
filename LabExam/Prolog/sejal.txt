@@ -1,0 +1,24 @@
+% Define the rules for going for a walk based on weather conditions should_go_for_a_walk :-
+write('Is the weather nice outside? (yes or no): '), read(Response), evaluate_weather(Response).
+evaluate_weather(yes) :-
+write('Is it not raining? (yes or no): '), read(Response), evaluate_rain(Response).
+evaluate_weather(no) :write('Stay indoors. The weather is not nice.').
+evaluate_weather(_) :write('Invalid response. Please answer with "yes" or "no."'), should_go_for_a_walk.
+evaluate_rain(yes) :write('Is it warm outside? (yes or no): '), read(Response), evaluate_warmth(Response).
+evaluate_rain(no) :write('Stay indoors. It is raining.').
+evaluate_rain(_) :write('Invalid response. Please answer with "yes" or "no."'), evaluate_weather(yes).
+evaluate_warmth(yes) :write('Great! Go for a walk and enjoy the weather.'). evaluate_warmth(no) :-
+write('Stay indoors. It is raining, and it is not warm outside.').
+
+
+
+
+
+
+
+queries
+should_go_for_a_walk.
+Is the weather nice outside? (yes or no): yes.
+Is it not raining? (yes or no): |: no.
+Stay indoors. It is running.
+true.

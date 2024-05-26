@@ -1,0 +1,105 @@
+package LAB;
+import java.util.*;
+
+public class CSP_nqueen {
+    static int N; // Define N as a class variable
+
+    // Function to check if placing a queen at (row, col) is safe
+    static boolean isSafe(int[][] board, int row, int col) {
+        // Queens in the same column
+        for (int i = 0; i < row; ++i)
+            if (board[i][col] == 1)
+                return false;
+
+        // Upper left diagonal
+        for (int i = row, j = col; i >= 0 && j >= 0; --i, --j)
+            if (board[i][j] == 1)
+                return false;
+
+        // Upper right diagonal
+        for (int i = row, j = col; i >= 0 && j < N; --i, ++j)
+            if (board[i][j] == 1)
+                return false;
+
+        return true;
+    }
+
+    static boolean solveNQueens(int[][] board, int row) {
+        if (row == N) { // all queens are placed
+            // Print the solution
+            for (int i = 0; i < N; ++i) {
+                for (int j = 0; j < N; ++j)
+                    System.out.print(board[i][j] + " ");
+                System.out.println();
+            }
+            return true;
+        }
+
+        for (int col = 0; col < N; ++col) {
+            if (isSafe(board, row, col)) {
+                board[row][col] = 1; // Place the queen
+
+                // Recur to place rest of the queens
+                if (solveNQueens(board, row + 1))
+                    return true;
+                // If it doesn't lead to a solution, backtrack
+                board[row][col] = 0;
+            }
+
+        }
+        return false;
+    }
+
+    public static void main(String[] args) {
+        Scanner sc= new Scanner(System.in);
+        System.out.print("Enter the value of N: ");
+        N = sc.nextInt(); // Read N from user input
+        int[][] board = new int[N][N]; // Initialize chessboard
+
+        if (!solveNQueens(board, 0)) {
+            System.out.println("Solution does not exist.");
+        }
+    }
+}
+
+
+
+
+
+
+Code Explanation:
+1.	Constants:
+•	N: Represents the size of the chessboard (N×N).
+2.	isSafe Function:
+•	Checks if placing a queen at a given position (row, col) is safe.
+•	Checks for conflicts with queens already placed in the same column, upper left diagonal, and upper right diagonal.
+3.	solveNQueens Function:
+•	Recursive function to solve the N-Queens problem.
+•	Base Case: If all queens are placed (reaches row == N), prints the board configuration.
+•	Recursive Step:
+•	Iterates through each column in the current row.
+•	If placing a queen at (row, col) is safe, marks that position as a queen (board[row][col] = 1) and recursively calls solveNQueens for the next row.
+•	If the recursive call returns true (i.e., a solution is found), returns true.
+•	If the recursive call returns false, backtracks by removing the queen from (row, col) and tries the next column.
+•	Returns false if no solution is found.
+4.	main Method:
+•	Initializes an empty chessboard represented by a 2D array board.
+•	Calls solveNQueens with the initial row set to 0.
+•	Prints "Solution does not exist." if no solution is found.
+Logic and Concepts:
+•	Backtracking:
+•	The code uses a recursive backtracking approach to explore all possible queen placements.
+•	It tries different configurations and backtracks whenever it reaches an invalid configuration.
+•	Safety Checking:
+•	The isSafe function ensures that queens are placed in positions where they do not threaten each other.
+•	It checks for conflicts with queens in the same row, column, and diagonals.
+•	Recursion:
+•	The solveNQueens function recursively places queens on the chessboard row by row.
+•	It explores all possible configurations until a valid solution is found or all possibilities are exhausted.
+•	Complexity:
+•	The time complexity of the algorithm is exponential, as it explores all possible configurations of queens on the chessboard.
+•	However, using backtracking and pruning invalid configurations helps reduce the search space.
+•	Optimization:
+•	The code optimizes the solution space by pruning branches that cannot lead to a valid solution.
+•	It avoids unnecessary computations by using the isSafe function to check for conflicts before proceeding with the placement of each queen.
+

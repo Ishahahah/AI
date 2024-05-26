@@ -1,0 +1,353 @@
+Filename -> UninformedSearch.java
+
+import java.util.ArrayList;
+import java.util.Scanner;
+
+class BFS {
+    /*
+    Note that for N-queen as the solution is achieved at the nth depth, 
+    BFS will be much slower than DFS and will expand more nodes
+
+	Iterative Deepening DFS Search (IDS) is often the best choice for solving 
+	the N-Queens problem across various board sizes due to its balance of optimality, 
+	efficiency, and memory usage.
+    */
+    
+    private int pos[]; // Array to hold the positions of queens on the board
+    private ArrayList<int[]> frontier; // List to hold the frontier nodes in BFS
+    private ArrayList<Integer> queens; // List to keep track of number of queens at each level 
+    private int n; // Size of the board (n x n)
+    private long expanded_nodes = 0; // Counter for the number of expanded nodes
+    private boolean found_sol = false; // Flag to indicate if a solution is found
+    
+    // Constructor to initialize the BFS solver with the board size
+    BFS(int n) {
+        this.n = n; 
+        frontier = new ArrayList<int[]>(); 
+        queens = new ArrayList<Integer>();
+        pos = new int[n+1]; // Positions array initialized with size n+1
+    }
+    
+    // Method to print the current board state
+    public void print_board(int k, int i) {
+        int temp[] = pos.clone(); // Clone the current positions array
+        temp[k] = i; // Place the queen at position (k, i)
+        for(int j = 1; j <= n; j++) {
+            for(int l = 1; l <= n; l++) {
+                if(l == temp[j])
+                    System.out.print(" Q "); // Print queen
+                else
+                    System.out.print(" * "); // Print empty cell
+            }
+            System.out.println("");
+        }
+        System.out.println("");
+    }
+    
+    // Method to check if placing a queen at (k, i) is safe
+    public Boolean isSafe(int k, int i) {
+        for(int j = 1; j < k; j++) {
+            if(pos[j] == i || Math.abs(pos[j] - i) == Math.abs(j - k)) {
+                return false; // Conflict detected
+            }
+        }
+        return true; // No conflict
+    }
+    
+    // BFS solver method
+    public void queenSolver(int k, int n) {
+        // Add the initial state of empty board to the frontier
+        frontier.add(pos); 
+        queens.add(k); // Initially k = 1
+        while(!found_sol) {
+            // Get the first element out of the frontier (As BFS is FIFO)
+            pos = frontier.get(0).clone(); 
+            k = queens.get(0); 
+            
+            // Delete the node from frontier
+            frontier.remove(0); 
+            queens.remove(0); 
+            
+            for(int i = 1; i <= n; i++) {
+                expanded_nodes++; 
+                if(!found_sol) {
+                    System.out.println("Total nodes expanded: " + expanded_nodes);
+                    print_board(k, i); 
+                    pos[k] = i;
+                } 
+                
+                // Check if the final state is reached
+                if(isSafe(k, i)) {
+                    frontier.add(pos.clone()); 
+                    queens.add(k + 1); 
+                    //pos[k] = i; 
+                    if(k == n) {
+                        found_sol = true; 
+                        System.out.println("\n\n-------------------------");    
+                        System.out.println("Solution state is: ");
+                        print_board(k, i);
+                        break; 
+                    }
+                }
+            }
+        }
+    }
+}
+
+class DFS {
+    private int pos[]; // Array to hold the positions of queens on the board
+    private int n; // Size of the board (n x n)
+    private boolean found_sol = false; // Flag to indicate if a solution is found
+    private long expanded_nodes = 0; // Counter for the number of expanded nodes
+
+    // Constructor to initialize the DFS solver with the board size
+    DFS(int n) {
+        this.n = n; 
+        pos = new int[n+1]; // Positions array initialized with size n+1
+    }
+    
+    // Method to print the current board state
+    public void print_board(int k, int i) {
+        int temp[] = pos.clone(); // Clone the current positions array
+        temp[k] = i; // Place the queen at position (k, i)
+        for(int j = 1; j <= n; j++) {
+            for(int l = 1; l <= n; l++) {
+                if(l == temp[j])
+                    System.out.print(" Q "); // Print queen
+                else
+                    System.out.print(" * "); // Print empty cell
+            }
+            System.out.println("");
+        }
+        System.out.println("");
+    }
+    
+    // DFS solver method
+    public void queenSolver(int k, int n) {
+        for(int i = 1; i <= n; i++) {
+            expanded_nodes++; 
+            if(!found_sol) {
+                System.out.println("Total nodes expanded: " + expanded_nodes);
+                print_board(k, i); 
+            }
+            if(isSafe(k, i)) {
+                pos[k] = i; 
+                if(k == n) {
+                    found_sol = true; 
+                    System.out.println("\n\n-------------------------");    
+                    System.out.println("Solution state is: ");
+                    print_board(k, i);
+                }
+                if(!found_sol) {
+                    queenSolver(k + 1, n);
+                }
+            }
+        }
+    }
+    
+    // Method to check if placing a queen at (k, i) is safe
+    public Boolean isSafe(int k, int i) {
+        for(int j = 1; j < k; j++) {
+            if(pos[j] == i || Math.abs(pos[j] - i) == Math.abs(j - k)) {
+                return false; // Conflict detected
+            }
+        }
+        return true; // No conflict
+    }
+}
+
+class Deepening {
+    private int pos[]; // Array to hold the positions of queens on the board
+    private int n; // Size of the board (n x n)
+    private boolean found_sol = false; // Flag to indicate if a solution is found
+    private long expanded_nodes = 0; // Counter for the number of expanded nodes
+    private int depth; // Maximum depth for the current search
+    private boolean failure = false; // Flag to indicate if the search failed
+
+    // Constructor to initialize the deepening search solver with the board size and depth limit
+    Deepening(int n, int depth) {
+        this.depth = depth; 
+        this.n = n; 
+        pos = new int[n+1]; // Positions array initialized with size n+1
+    }
+    
+    // Method to get the failure status of the search
+    public boolean getStatus() {
+        return failure; 
+    }
+    
+    // Method to print the current board state
+    public void print_board(int k, int i) {
+        int temp[] = pos.clone(); // Clone the current positions array
+        temp[k] = i; // Place the queen at position (k, i)
+        for(int j = 1; j <= n; j++) {
+            for(int l = 1; l <= n; l++) {
+                if(l == temp[j])
+                    System.out.print(" Q "); // Print queen
+                else
+                    System.out.print(" * "); // Print empty cell
+            }
+            System.out.println("");
+        }
+        System.out.println("");
+    }
+    
+    // Deepening search solver method
+    public void queenSolver(int k, int n) {
+        if(k > depth) {
+            failure = true; 
+            return; 
+        }
+        for(int i = 1; i <= n; i++) {
+            expanded_nodes++; 
+            if(!found_sol) {
+                System.out.println("Total nodes expanded: " + expanded_nodes);
+                print_board(k, i); 
+            }
+            if(isSafe(k, i)) {
+                pos[k] = i; 
+                if(k == n) {
+                    found_sol = true; 
+                    System.out.println("\n\n-------------------------");    
+                    System.out.println("Solution state is: ");
+                    print_board(k, i);
+                }
+                if(!found_sol) {
+                    queenSolver(k + 1, n);
+                }
+            }
+        }
+    }
+    
+    // Method to check if placing a queen at (k, i) is safe
+    public Boolean isSafe(int k, int i) {
+        for(int j = 1; j < k; j++) {
+            if(pos[j] == i || Math.abs(pos[j] - i) == Math.abs(j - k)) {
+                return false; // Conflict detected
+            }
+        }
+        return true; // No conflict
+    }
+}
+
+class UninformedSearch {
+    public static void main(String args[]) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Enter the size of the board:");
+        int n = sc.nextInt();
+
+        // Uncomment the desired search algorithm to use
+        
+        // Using Depth First Search (DFS)
+        //DFS s = new DFS(n);
+        //s.queenSolver(1, n);
+        
+        // Using Breadth First Search (BFS)
+        BFS b = new BFS(n); 
+        b.queenSolver(1, n);
+        
+        // Using Depth Limited DFS Search
+        // int depth = 3; 
+        // Deepening dl = new Deepening(n, depth); 
+        // dl.queenSolver(1, n);
+        // if(dl.getStatus()) {
+        //     System.out.println("Failed to find a solution at depth : " + depth);
+        // }
+        
+        // Using Iterative Deepening DFS Search (IDS)
+		// For this don't delete any function (uses BFS ande DFS)
+        // for(int d = 1; d <= n; d++) {
+        //     Deepening id = new Deepening(n, d); 
+        //     id.queenSolver(1, n);
+        //     if(id.getStatus()) {
+        //         System.out.println("Failed to find a solution at depth: " + d);
+        //     } else {
+        //         System.out.println("Solution found at depth : " + d);
+        //         break; 
+        //     }
+        // }
+    }
+}
+
+
+// Depth-First Search (DFS)
+// Approach:
+
+// DFS explores as far as possible along each branch before backing up.
+// It uses recursion (or an explicit stack) to go deep into the search tree.
+// It tries to place a queen in each column of the current row and then recursively tries to place queens in the subsequent rows.
+// If it finds a conflict (i.e., placing a queen is not safe), it backtracks to the previous row and tries the next column.
+
+//Output:
+
+// The first solution it finds is typically a deeper one in the search tree.
+// It doesn't necessarily find the optimal solution (the one with the minimum number of nodes expanded).
+// Since it goes deep before exploring other branches, it might expand fewer nodes than BFS for the first solution but not necessarily the optimal.
+
+// Breadth-First Search (BFS)
+// Approach:
+
+// BFS explores all nodes at the present depth level before moving on to nodes at the next depth level.
+// It uses a queue to manage the frontier of nodes to be explored.
+// It systematically tries to place queens in all possible positions at each depth level before going deeper.
+
+// Output:
+
+// Finds the solution with the minimum number of moves (depth of the solution).
+// It tends to expand more nodes compared to DFS because it explores all positions at a given depth before moving deeper.
+// BFS can be slower for the N-Queens problem because it needs to explore a wider range of possibilities at each level before finding a solution.
+
+// Depth-Limited Search (DLS)
+// Approach:
+
+// DLS is a variant of DFS that imposes a limit on the depth it explores.
+// It operates similarly to DFS but stops exploring a path once it reaches a specified depth limit.
+// If a solution is not found within this depth, it fails.
+
+// Output:
+
+// May fail to find a solution if the depth limit is set too low.
+// More efficient than DFS if the depth limit is appropriately chosen because it avoids going too deep unnecessarily.
+// If the depth limit is too high, it behaves like DFS; if too low, it might not find a solution at all.
+
+// Iterative Deepening Search (IDS)
+// Approach:
+
+// IDS combines the benefits of DFS and BFS.
+// It performs a series of depth-limited searches with increasing depth limits.
+// It starts with a depth limit of 1 and increases it incrementally until a solution is found.
+// It effectively performs a BFS in terms of finding the shallowest solution but with the space efficiency of DFS.
+
+// Output:
+
+// Finds the optimal solution (shallowest depth) like BFS.
+// Uses less memory than BFS because each depth-limited search is essentially a DFS.
+// It might seem inefficient because it re-explores nodes, but it’s very effective in practice due to the nature of exponential growth in the number of nodes at each depth level.
+
+// Summary of Outputs
+// DFS:
+
+// Potentially fewer nodes expanded for the first solution.
+// Not guaranteed to find the optimal solution (minimum depth).
+
+// BFS:
+
+// More nodes expanded.
+// Guaranteed to find the optimal solution in terms of the number of moves.
+
+// DLS:
+
+// Nodes expanded depend on the chosen depth limit.
+// Can fail to find a solution if the depth limit is too low.
+
+// IDS:
+
+// Combines benefits of both DFS and BFS.
+// Finds the optimal solution (minimum depth) with efficient use of memory.
+// Each algorithm has its strengths and weaknesses, and the choice of algorithm depends on the specific requirements and constraints of the problem at hand.
+
+
+
+
+
+

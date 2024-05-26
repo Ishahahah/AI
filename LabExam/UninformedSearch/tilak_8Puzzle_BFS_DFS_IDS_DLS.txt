@@ -1,0 +1,489 @@
+package UninformedSearch;
+
+import java.util.*;
+
+public class EightPuzzleProblem {
+    private static final int SIZE = 3; // Size of the puzzle board
+    private static final int[][] GOAL_STATE = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 0 } }; // Goal state
+
+    public static void main(String[] args) {
+        EightPuzzleProblem problem = new EightPuzzleProblem();
+        int[][] initialState = { { 1, 2, 3 }, { 0, 4, 6 }, { 7, 5, 8 } }; // Updated initial state
+
+        System.out.println("BFS:");
+        printResult(problem.bfs(initialState), problem.bfsStates);
+
+        System.out.println("\nDFS:");
+        printResult(problem.dfs(initialState), problem.dfsStates);
+
+        System.out.println("\nDLS:");
+        printResult(problem.dls(initialState, 5), problem.dlsStates);
+
+        System.out.println("\nIDDFS:");
+        printResult(problem.iddfs(initialState), problem.iddfsStates);
+    }
+
+    static class PuzzleState {
+        int[][] board;
+
+        PuzzleState(int[][] board) {
+            this.board = board;
+        }
+
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            PuzzleState state = (PuzzleState) o;
+            return Arrays.deepEquals(board, state.board);
+        }
+
+        public int hashCode() {
+            return Arrays.deepHashCode(board);
+        }
+    }
+
+    int bfsStates = 0, dfsStates = 0, dlsStates = 0, temp = 0, iddfsStates = 0;
+
+    private List<PuzzleState> getNeighbors(PuzzleState state) {
+        List<PuzzleState> neighbors = new ArrayList<>();
+        int zeroRow = -1, zeroCol = -1;
+        // Find the position of the zero (empty) tile
+        outerloop: for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (state.board[i][j] == 0) {
+                    zeroRow = i;
+                    zeroCol = j;
+                    break outerloop;
+                }
+            }
+        }
+
+        // Generate neighbors by moving the zero tile
+        int[][] moves = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+        for (int[] move : moves) {
+            int newRow = zeroRow + move[0];
+            int newCol = zeroCol + move[1];
+            if (isValidMove(newRow, newCol)) {
+                int[][] newBoard = copyBoard(state.board);
+                swap(newBoard, zeroRow, zeroCol, newRow, newCol);
+                neighbors.add(new PuzzleState(newBoard));
+            }
+        }
+        return neighbors;
+    }
+
+    private boolean isValidMove(int row, int col) {
+        return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    }
+
+    private int[][] copyBoard(int[][] board) {
+        int[][] newBoard = new int[SIZE][SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            System.arraycopy(board[i], 0, newBoard[i], 0, SIZE);
+        }
+        return newBoard;
+    }
+
+    private void swap(int[][] board, int row1, int col1, int row2, int col2) {
+        int temp = board[row1][col1];
+        board[row1][col1] = board[row2][col2];
+        board[row2][col2] = temp;
+    }
+
+    private List<PuzzleState> constructPath(Map<PuzzleState, PuzzleState> parentMap, PuzzleState goal) {
+        List<PuzzleState> path = new ArrayList<>();
+        for (PuzzleState at = goal; at != null; at = parentMap.get(at))
+            path.add(at);
+        Collections.reverse(path);
+        return path;
+    }
+
+    public List<PuzzleState> bfs(int[][] initialState) {
+        Queue<PuzzleState> queue = new LinkedList<>();
+        Set<PuzzleState> visited = new HashSet<>();
+        Map<PuzzleState, PuzzleState> parentMap = new HashMap<>();
+        PuzzleState initialPuzzleState = new PuzzleState(initialState);
+        queue.add(initialPuzzleState);
+        visited.add(initialPuzzleState);
+        while (!queue.isEmpty()) {
+            PuzzleState current = queue.poll();
+            bfsStates++;
+            if (isGoalState(current))
+                return constructPath(parentMap, current);
+            for (PuzzleState neighbor : getNeighbors(current)) {
+                if (!visited.contains(neighbor)) {
+                    queue.add(neighbor);
+                    visited.add(neighbor);
+                    parentMap.put(neighbor, current);
+                }
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    public List<PuzzleState> dfs(int[][] initialState) {
+        Stack<PuzzleState> stack = new Stack<>();
+        Set<PuzzleState> visited = new HashSet<>();
+        Map<PuzzleState, PuzzleState> parentMap = new HashMap<>();
+        PuzzleState initialPuzzleState = new PuzzleState(initialState);
+        stack.push(initialPuzzleState);
+        visited.add(initialPuzzleState);
+        while (!stack.isEmpty()) {
+            PuzzleState current = stack.pop();
+            dfsStates++;
+            if (isGoalState(current))
+                return constructPath(parentMap, current);
+            for (PuzzleState neighbor : getNeighbors(current)) {
+                if (!visited.contains(neighbor)) {
+                    stack.push(neighbor);
+                    visited.add(neighbor);
+                    parentMap.put(neighbor, current);
+                }
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    public List<PuzzleState> dls(int[][] initialState, int limit) {
+        return dlsRecursive(new PuzzleState(initialState), new HashSet<>(), new HashMap<>(), limit);
+    }
+
+    private List<PuzzleState> dlsRecursive(PuzzleState current, Set<PuzzleState> visited,
+            Map<PuzzleState, PuzzleState> parentMap, int limit) {
+        dlsStates++;
+        temp++;
+        if (isGoalState(current))
+            return constructPath(parentMap, current);
+        if (limit == 0)
+            return Collections.emptyList();
+        visited.add(current);
+        for (PuzzleState neighbor : getNeighbors(current)) {
+            if (!visited.contains(neighbor)) {
+                parentMap.put(neighbor, current);
+                List<PuzzleState> result = dlsRecursive(neighbor, visited, parentMap, limit - 1);
+                if (!result.isEmpty())
+                    return result;
+            }
+        }
+        visited.remove(current);
+        return Collections.emptyList();
+    }
+
+    public List<PuzzleState> iddfs(int[][] initialState) {
+        List<PuzzleState> result;
+        int depth;
+        for (depth = 0;; depth++) {
+            temp = 0;
+            result = dls(initialState, depth);
+            iddfsStates += temp;
+            if (!result.isEmpty())
+                return result;
+        }
+    }
+
+    private boolean isGoalState(PuzzleState state) {
+        return Arrays.deepEquals(state.board, GOAL_STATE);
+    }
+
+    private static void printResult(List<PuzzleState> result, int statesExplored) {
+        if (result.isEmpty()) {
+            System.out.println("No solution found.");
+        } else {
+            for (int i = 0; i < result.size(); i++) {
+                System.out.println("Step " + i + ":");
+                printBoard(result.get(i).board);
+            }
+            System.out.println("Total states explored: " + statesExplored);
+        }
+    }
+
+    private static void printBoard(int[][] board) {
+        for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                System.out.print(board[i][j] + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+}
+/*
+ Sure, let's go through the code and explain the logic of each algorithm:
+
+### Breadth-First Search (BFS):
+Breadth-First Search is implemented using a queue data structure. The algorithm starts from the initial state and explores all possible moves level by level. It maintains a queue of states to be explored next. For each state in the queue, it generates all possible neighbors (states that can be reached by moving the blank tile), adds them to the queue if they haven't been visited before, and keeps track of the parent-child relationship to reconstruct the path once the goal state is found. This algorithm ensures that the shortest path to the goal state is found because it explores all states level by level.
+
+### Depth-First Search (DFS):
+Depth-First Search is implemented using a stack data structure. The algorithm explores as far as possible along each branch before backtracking. It starts from the initial state and explores one branch of the state space tree until it reaches a leaf node or the depth limit. If the goal state is not found, it backtracks and explores the next branch. This process continues until the goal state is found or all branches have been explored. DFS may not find the shortest path to the goal state and can get stuck in infinite loops if there are cycles in the state space graph.
+
+### Depth-Limited Search (DLS):
+Depth-Limited Search is a variation of DFS that limits the depth of exploration. It prevents DFS from going too deep into the state space tree, which helps avoid infinite loops and excessive memory consumption. DLS uses recursion to explore states up to a specified depth limit. If the goal state is not found within the depth limit, it backtracks and explores other branches. DLS is useful when the depth of the shortest path to the goal state is known or when memory resources are limited.
+
+### Iterative Deepening Depth-First Search (IDDFS):
+Iterative Deepening Depth-First Search is a combination of BFS and DFS. It repeatedly applies DLS with increasing depth limits until the goal state is found. IDDFS starts with a depth limit of 0 and gradually increases the depth limit until the goal state is found or all states have been explored. This algorithm combines the benefits of BFS (guaranteed to find the shortest path) with the memory efficiency of DFS (only stores states at the current depth level). It is particularly useful for large state spaces where memory constraints may limit the use of BFS.
+
+Overall, these algorithms are used to solve the 8-puzzle problem by exploring the state space graph and finding the shortest path from the initial state to the goal state. Each algorithm has its advantages and limitations, and the choice of algorithm depends on factors such as memory constraints, time complexity, and the structure of the state space graph.
+
+ */
+/*
+ java
+Copy code
+package UninformedSearch;
+This line declares the package name UninformedSearch, indicating that all classes in this file belong to this package.
+java
+Copy code
+import java.util.*;
+This line imports the java.util package, which contains utility classes and data structures such as Queue, Stack, Set, Map, and ArrayList.
+java
+Copy code
+public class EightPuzzleProblem {
+This line declares a public class named EightPuzzleProblem, which encapsulates the logic to solve the 8-puzzle problem.
+java
+Copy code
+    private static final int SIZE = 3; // Size of the puzzle board
+This line declares a constant variable SIZE with a value of 3, representing the size of the puzzle board (3x3 grid).
+java
+Copy code
+    private static final int[][] GOAL_STATE = { { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 0 } }; // Goal state
+This line declares a constant variable GOAL_STATE as a 2D array representing the goal state of the puzzle. The numbers 1 through 8 represent the tiles, and 0 represents the empty tile.
+java
+Copy code
+    public static void main(String[] args) {
+This line declares the main method, which serves as the entry point of the program.
+java
+Copy code
+        EightPuzzleProblem problem = new EightPuzzleProblem();
+This line creates an instance of the EightPuzzleProblem class to access its methods.
+java
+Copy code
+        int[][] initialState = { { 1, 2, 3 }, { 0, 4, 6 }, { 7, 5, 8 } }; // Updated initial state
+This line declares a 2D array initialState representing the initial state of the puzzle. It initializes the puzzle with some initial configuration.
+java
+Copy code
+        System.out.println("BFS:");
+        printResult(problem.bfs(initialState), problem.bfsStates);
+This line prints the header "BFS:" and calls the bfs method of the problem instance to perform Breadth-First Search on the initial state. It then prints the result using the printResult method.
+java
+Copy code
+        System.out.println("\nDFS:");
+        printResult(problem.dfs(initialState), problem.dfsStates);
+This line prints the header "DFS:" and calls the dfs method of the problem instance to perform Depth-First Search on the initial state. It then prints the result using the printResult method.
+java
+Copy code
+        System.out.println("\nDLS:");
+        printResult(problem.dls(initialState, 5), problem.dlsStates);
+This line prints the header "DLS:" and calls the dls method of the problem instance to perform Depth-Limited Search with a depth limit of 5 on the initial state. It then prints the result using the printResult method.
+java
+Copy code
+        System.out.println("\nIDDFS:");
+        printResult(problem.iddfs(initialState), problem.iddfsStates);
+This line prints the header "IDDFS:" and calls the iddfs method of the problem instance to perform Iterative Deepening Depth-First Search on the initial state. It then prints the result using the printResult method.
+java
+Copy code
+    }
+This line marks the end of the main method.
+java
+Copy code
+    static class PuzzleState {
+        int[][] board;
+
+        PuzzleState(int[][] board) {
+            this.board = board;
+        }
+This line declares a static nested class PuzzleState, which represents the state of the puzzle board. It contains a 2D array board to store the configuration of the puzzle.
+java
+Copy code
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+            PuzzleState state = (PuzzleState) o;
+            return Arrays.deepEquals(board, state.board);
+        }
+This method overrides the equals method to compare two PuzzleState objects based on the configuration of their boards.
+java
+Copy code
+        public int hashCode() {
+            return Arrays.deepHashCode(board);
+        }
+    }
+This method overrides the hashCode method to generate a hash code for a PuzzleState object based on the configuration of its board.
+java
+Copy code
+    int bfsStates = 0, dfsStates = 0, dlsStates = 0, temp = 0, iddfsStates = 0;
+This line declares integer variables to keep track of the number of states explored by each search algorithm.
+The explanation continues in the next message due to space limitations.
+
+
+continue
+ChatGPT
+java
+Copy code
+    private List<PuzzleState> getNeighbors(PuzzleState state) {
+        List<PuzzleState> neighbors = new ArrayList<>();
+        int zeroRow = -1, zeroCol = -1;
+        // Find the position of the zero (empty) tile
+        outerloop: for (int i = 0; i < SIZE; i++) {
+            for (int j = 0; j < SIZE; j++) {
+                if (state.board[i][j] == 0) {
+                    zeroRow = i;
+                    zeroCol = j;
+                    break outerloop;
+                }
+            }
+        }
+
+        // Generate neighbors by moving the zero tile
+        int[][] moves = { { -1, 0 }, { 1, 0 }, { 0, -1 }, { 0, 1 } };
+        for (int[] move : moves) {
+            int newRow = zeroRow + move[0];
+            int newCol = zeroCol + move[1];
+            if (isValidMove(newRow, newCol)) {
+                int[][] newBoard = copyBoard(state.board);
+                swap(newBoard, zeroRow, zeroCol, newRow, newCol);
+                neighbors.add(new PuzzleState(newBoard));
+            }
+        }
+        return neighbors;
+    }
+This method getNeighbors takes a PuzzleState object as input and returns a list of neighboring states. It finds the position of the zero (empty) tile in the current state, and then generates neighboring states by moving the zero tile up, down, left, or right.
+java
+Copy code
+    private boolean isValidMove(int row, int col) {
+        return row >= 0 && row < SIZE && col >= 0 && col < SIZE;
+    }
+This method isValidMove checks if a move to the specified row and column is valid within the puzzle board boundaries.
+java
+Copy code
+    private int[][] copyBoard(int[][] board) {
+        int[][] newBoard = new int[SIZE][SIZE];
+        for (int i = 0; i < SIZE; i++) {
+            System.arraycopy(board[i], 0, newBoard[i], 0, SIZE);
+        }
+        return newBoard;
+    }
+This method copyBoard creates a deep copy of the puzzle board to avoid modifying the original board when making moves.
+java
+Copy code
+    private void swap(int[][] board, int row1, int col1, int row2, int col2) {
+        int temp = board[row1][col1];
+        board[row1][col1] = board[row2][col2];
+        board[row2][col2] = temp;
+    }
+This method swap swaps the values of two tiles on the puzzle board.
+java
+Copy code
+    private List<PuzzleState> constructPath(Map<PuzzleState, PuzzleState> parentMap, PuzzleState goal) {
+        List<PuzzleState> path = new ArrayList<>();
+        for (PuzzleState at = goal; at != null; at = parentMap.get(at))
+            path.add(at);
+        Collections.reverse(path);
+        return path;
+    }
+This method constructPath constructs the path from the initial state to the goal state using the parent map generated during the search.
+java
+Copy code
+    public List<PuzzleState> bfs(int[][] initialState) {
+        Queue<PuzzleState> queue = new LinkedList<>();
+        Set<PuzzleState> visited = new HashSet<>();
+        Map<PuzzleState, PuzzleState> parentMap = new HashMap<>();
+        PuzzleState initialPuzzleState = new PuzzleState(initialState);
+        queue.add(initialPuzzleState);
+        visited.add(initialPuzzleState);
+        while (!queue.isEmpty()) {
+            PuzzleState current = queue.poll();
+            bfsStates++;
+            if (isGoalState(current))
+                return constructPath(parentMap, current);
+            for (PuzzleState neighbor : getNeighbors(current)) {
+                if (!visited.contains(neighbor)) {
+                    queue.add(neighbor);
+                    visited.add(neighbor);
+                    parentMap.put(neighbor, current);
+                }
+            }
+        }
+        return Collections.emptyList();
+    }
+This method bfs performs Breadth-First Search (BFS) on the initial state to find the goal state. It uses a queue to explore states level by level, keeping track of visited states and parent-child relationships. When the goal state is found, it constructs and returns the path from the initial state to the goal state.
+The explanation continues in the next message due to space limitations.
+
+continue
+ChatGPT
+java
+Copy code
+    public List<PuzzleState> dfs(int[][] initialState) {
+        Stack<PuzzleState> stack = new Stack<>();
+        Set<PuzzleState> visited = new HashSet<>();
+        Map<PuzzleState, PuzzleState> parentMap = new HashMap<>();
+        PuzzleState initialPuzzleState = new PuzzleState(initialState);
+        stack.push(initialPuzzleState);
+        visited.add(initialPuzzleState);
+        while (!stack.isEmpty()) {
+            PuzzleState current = stack.pop();
+            dfsStates++;
+            if (isGoalState(current))
+                return constructPath(parentMap, current);
+            for (PuzzleState neighbor : getNeighbors(current)) {
+                if (!visited.contains(neighbor)) {
+                    stack.push(neighbor);
+                    visited.add(neighbor);
+                    parentMap.put(neighbor, current);
+                }
+            }
+        }
+        return Collections.emptyList();
+    }
+This method dfs performs Depth-First Search (DFS) on the initial state to find the goal state. It uses a stack to explore states deeply before backtracking. It also keeps track of visited states and parent-child relationships. When the goal state is found, it constructs and returns the path from the initial state to the goal state.
+java
+Copy code
+    public List<PuzzleState> dls(int[][] initialState, int limit) {
+        return dlsRecursive(new PuzzleState(initialState), new HashSet<>(), new HashMap<>(), limit);
+    }
+
+    private List<PuzzleState> dlsRecursive(PuzzleState current, Set<PuzzleState> visited,
+            Map<PuzzleState, PuzzleState> parentMap, int limit) {
+        dlsStates++;
+        temp++;
+        if (isGoalState(current))
+            return constructPath(parentMap, current);
+        if (limit == 0)
+            return Collections.emptyList();
+        visited.add(current);
+        for (PuzzleState neighbor : getNeighbors(current)) {
+            if (!visited.contains(neighbor)) {
+                parentMap.put(neighbor, current);
+                List<PuzzleState> result = dlsRecursive(neighbor, visited, parentMap, limit - 1);
+                if (!result.isEmpty())
+                    return result;
+            }
+        }
+        visited.remove(current);
+        return Collections.emptyList();
+    }
+These methods dls and dlsRecursive perform Depth-Limited Search (DLS) with a specified depth limit. It recursively explores states up to a certain depth, keeping track of visited states and parent-child relationships. When the goal state is found within the depth limit, it constructs and returns the path from the initial state to the goal state.
+java
+Copy code
+    public List<PuzzleState> iddfs(int[][] initialState) {
+        List<PuzzleState> result;
+        int depth;
+        for (depth = 0;; depth++) {
+            temp = 0;
+            result = dls(initialState, depth);
+            iddfsStates += temp;
+            if (!result.isEmpty())
+                return result;
+        }
+    }
+This method iddfs performs Iterative Deepening Depth-First Search (IDDFS) on the initial state to find the goal state. It repeatedly performs DLS with increasing depth limits until the goal state is found or all depths are exhausted. It also keeps track of the total states explored during the search.
+This concludes the explanation of the code line by line. Let me know if you need further clarification on any part!
+
+
+
+
+
+
+ */

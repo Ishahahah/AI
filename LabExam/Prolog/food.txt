@@ -1,0 +1,88 @@
+% Define food options with attributes.
+food_option(butter_chicken, indian, chicken, curry, casual_dining, moderate_price, mild, no_prebook, dine-in, north_india).
+food_option(pav_bhaji, indian, vegetables, curry, fast_food, affordable, spicy, no_prebook, parcel, north_india).
+food_option(idli_sambhar, indian, rice, lentils, fast_food, affordable, mild, no_prebook, dine-in, south_india).
+food_option(dosa, indian, rice, lentils, fast_food, affordable, mild, no_prebook, dine-in, south_india).
+food_option(rogan_josh, indian, lamb, curry, fine_dining, expensive, spicy, prebook, dine-in, north_india).
+food_option(dhokla, indian, gram_flour, snacks, fast_food, affordable, mild, no_prebook, parcel, west_india).
+food_option(vada_pav, indian, potato, bread, fast_food, affordable, spicy, no_prebook, parcel, west_india).
+food_option(biryani, indian, rice, meat, casual_dining, moderate_price, spicy, no_prebook, dine-in, various_regions).
+% Add more Indian dishes and regions as needed.
+
+% Define rules to recommend food options based on user preferences.
+recommend_food(Siddhi, FoodOption) :-
+    ask_cuisine(Cuisine),
+    (Cuisine = indian -> ask_indian_region(Region), ask_vegetarian_nonvegetarian(VegNonVeg), ask_dietary_preferences(Siddhi, Cuisine, MainIngredient, Texture, MealType, Affordability, Spiciness, Prebook, Parcel, Region, VegNonVeg) ;
+                        ask_dietary_preferences(Siddhi, Cuisine, MainIngredient, Texture, MealType, Affordability, Spiciness, Prebook, Parcel, Region, various_regions)),
+    (food_option(FoodOption, Cuisine, MainIngredient, Texture, MealType, Affordability, Spiciness, Prebook, Parcel, Region, VegNonVeg) ->
+        true ;
+        write('Sorry, no suitable food option available based on your preferences.'), nl).
+
+% Ask the user about their dietary preferences, including the region for Indian cuisine and vegetarian/non-vegetarian options.
+ask_dietary_preferences(Siddhi, Cuisine, MainIngredient, Texture, MealType, Affordability, Spiciness, Prebook, Parcel, Region, VegNonVeg) :-
+    write('Hello, '), write(Siddhi), write('!'), nl,
+    ask_main_ingredient(MainIngredient),
+    ask_texture(Texture),
+    ask_meal_type(MealType),
+    ask_affordability(Affordability),
+    ask_spiciness(Spiciness),
+    ask_prebook(Prebook),
+    ask_dining_method(Parcel),
+    % Ask if the user prefers vegetarian or non-vegetarian options.
+    ask_vegetarian_nonvegetarian(VegNonVeg),
+    % If the cuisine is Indian, ask for the region.
+    (Cuisine = indian -> ask_indian_region(Region) ; Region = various_regions).
+
+% Define a question for the Indian region.
+ask_indian_region(Region) :-
+    write('For Indian cuisine, which region are you interested in? (north/south/west/east/central/various_regions)'),
+    read(Region).
+
+% Define a question for vegetarian or non-vegetarian options.
+ask_vegetarian_nonvegetarian(VegNonVeg) :-
+    write('Do you prefer vegetarian or non-vegetarian options? (vegetarian/non-vegetarian)'),
+    read(VegNonVeg).
+
+% Define a question for the cuisine.
+ask_cuisine(Cuisine) :-
+    write('What cuisine do you prefer? (indian/italian/japanese/american/healthy/fusion/greek/chinese/canadian/middle_eastern/thai/various)'),
+    read(Cuisine).
+
+% Define a question for the main ingredient.
+ask_main_ingredient(MainIngredient) :-
+    write('What is your preferred main ingredient? (chicken/vegetables/lentils/lamb/gram_flour/potato/rice/...)'),
+    read(MainIngredient).
+
+% Define a question for the texture.
+ask_texture(Texture) :-
+    write('Do you like your food to be curry, snacks, bread, or rice in texture? (curry/snacks/bread/rice/...)'),
+    read(Texture).
+
+% Define a question for the meal type.
+ask_meal_type(MealType) :-
+    write('What type of meal are you looking for? (casual_dining/fine_dining/fast_food/...)'),
+    read(MealType).
+
+% Define a question for affordability.
+ask_affordability(Affordability) :-
+    write('Is affordability important to you? (affordable/moderate_price/expensive)'),
+    read(Affordability).
+
+% Define a question for spiciness.
+ask_spiciness(Spiciness) :-
+    write('Do you prefer mild, spicy, or very spicy food? (mild/spicy/very_spicy)'),
+    read(Spiciness).
+
+% Define a question for prebooking.
+ask_prebook(Prebook) :-
+    write('Do you want to prebook a table? (prebook/no_prebook)'),
+    read(Prebook).
+
+% Define a question for dining method.
+ask_dining_method(Parcel) :-
+    write('Do you want your food for dining in or as a takeaway/parcel? (dine-in/parcel)'),
+    read(Parcel).
+
+% Example usage:
+% To recommend a food option for 'Siddhi':
+% recommend_food(siddhi, FoodOption).

@@ -1,0 +1,96 @@
+
+CSP Graph Coloring Problem 
+
+package LAB;
+import java.util.Scanner;
+public class CSP {
+ private static int V; // Number of vertices
+
+	    public static void main(String[] args) {
+	        Scanner scanner = new Scanner(System.in);
+
+	        System.out.println("Enter the number of vertices:");
+	        V = scanner.nextInt();
+
+	        boolean[][] graph = new boolean[V][V];
+
+	        System.out.println("Enter the adjacency matrix of the graph:");
+	        for (int i = 0; i < V; i++) {
+	            for (int j = 0; j < V; j++) {
+	                graph[i][j] = scanner.nextInt() == 1;
+	            }
+	        }
+
+	        System.out.println("Enter the number of colors:");
+	        int m = scanner.nextInt();
+
+	        if (!graphColoring(graph, m)) {
+	            System.out.println("Solution does not exist");
+	        }
+	    }
+
+	    private static boolean isSafe(int v, boolean[][] graph, int[] color, int c) {
+	        for (int i = 0; i < V; i++) {
+	            if (graph[v][i] && c == color[i]) {
+	                return false;
+	            }
+	        }
+	        return true;
+	    }
+
+	    private static boolean graphColoringUtil(boolean[][] graph, int m, int[] color, int v) {
+	        if (v == V) {
+	            return true;
+	        }
+
+	        for (int c = 1; c <= m; c++) {
+	            if (isSafe(v, graph, color, c)) {
+	                color[v] = c;
+	                if (graphColoringUtil(graph, m, color, v + 1)) {
+	                    return true;
+	                }
+	                color[v] = 0; // backtrack
+	            }
+	        }
+	        return false;
+	    }
+
+	    private static boolean graphColoring(boolean[][] graph, int m) {
+	        int[] color = new int[V];
+	        for (int i = 0; i < V; i++) {
+	            color[i] = 0;
+	        }
+
+	        if (!graphColoringUtil(graph, m, color, 0)) {
+	            return false;
+	        }
+
+	        printSolution(color);
+	        return true;
+	    }
+
+	    private static void printSolution(int[] color) {
+	        System.out.println("Solution Exists: Following are the assigned colors:");
+	        for (int i = 0; i < V; i++) {
+	            System.out.print(" " + color[i] + " ");
+	        }
+	        System.out.println();
+	    }
+	}
+
+
+
+
+4
+
+Enter the adjacency matrix of the graph:
+0 1 1 1
+1 0 1 0
+1 1 0 1
+1 0 1 0
+
+Enter the number of colors:
+3
+
+Solution Exists: Following are the assigned colors:
+ 1  2  3  2

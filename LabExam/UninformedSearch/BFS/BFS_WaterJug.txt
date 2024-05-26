@@ -1,0 +1,201 @@
+import java.util.*;
+
+public class WaterJugBFS {
+    
+    // Function to print the path from the initial state to the target state
+    public static void printPath(Map<Pair, Pair> pathMap, Pair u) {
+        if (u.x == 0 && u.y == 0) {
+            System.out.println(0 + "\t" + 0);
+            return;
+        }
+        printPath(pathMap, pathMap.get(u));
+        System.out.println(u.x + "\t" + u.y);
+    }
+
+    // Function to perform BFS and solve the water jug problem
+    public static void BFS(int jug1Capacity, int jug2Capacity, int target) {
+        // Map to mark visited states
+        Map<Pair, Integer> visited = new HashMap<>();
+        // Map to store the path
+        Map<Pair, Pair> pathMap = new HashMap<>();
+        boolean isSolvable = false; // Flag to check if the solution is found
+        Queue<Pair> queue = new LinkedList<>();
+        
+        // Starting with the initial state (0, 0)
+        queue.add(new Pair(0, 0));
+
+        // BFS loop
+        while (!queue.isEmpty()) {
+            Pair current = queue.poll();
+
+            // Skip if the current state is already visited
+            if (visited.containsKey(current))
+                continue;
+
+            // Skip if the current state is out of bounds
+            if (current.x > jug1Capacity || current.x < 0 || current.y > jug2Capacity || current.y < 0)
+                continue;
+
+            // Mark the current state as visited
+            visited.put(current, 1);
+
+            // Check if we have reached the target state
+            if (current.x == target || current.y == target) {
+                isSolvable = true;
+                printPath(pathMap, current);
+                
+                // Print the final state adjustment if necessary
+                if (current.x == target && current.y != 0) {
+                    System.out.println(current.x + "\t" + 0);
+                } else if (current.y == target && current.x != 0) {
+                    System.out.println(0 + "\t" + current.y);
+                }
+                return;
+            }
+
+            // Generate all possible moves
+            // Fill jug2
+            if (!visited.containsKey(new Pair(current.x, jug2Capacity))) {
+                queue.add(new Pair(current.x, jug2Capacity));
+                pathMap.put(new Pair(current.x, jug2Capacity), current);
+            }
+            
+            // Fill jug1
+            if (!visited.containsKey(new Pair(jug1Capacity, current.y))) {
+                queue.add(new Pair(jug1Capacity, current.y));
+                pathMap.put(new Pair(jug1Capacity, current.y), current);
+            }
+            
+            // Transfer jug1 -> jug2
+            int transferToJug2 = Math.min(current.x, jug2Capacity - current.y);
+            Pair newState1 = new Pair(current.x - transferToJug2, current.y + transferToJug2);
+            if (!visited.containsKey(newState1)) {
+                queue.add(newState1);
+                pathMap.put(newState1, current);
+            }
+            
+            // Transfer jug2 -> jug1
+            int transferToJug1 = Math.min(current.y, jug1Capacity - current.x);
+            Pair newState2 = new Pair(current.x + transferToJug1, current.y - transferToJug1);
+            if (!visited.containsKey(newState2)) {
+                queue.add(newState2);
+                pathMap.put(newState2, current);
+            }
+            
+            // Empty jug2
+            if (!visited.containsKey(new Pair(current.x, 0))) {
+                queue.add(new Pair(current.x, 0));
+                pathMap.put(new Pair(current.x, 0), current);
+            }
+            
+            // Empty jug1
+            if (!visited.containsKey(new Pair(0, current.y))) {
+                queue.add(new Pair(0, current.y));
+                pathMap.put(new Pair(0, current.y), current);
+            }
+        }
+        
+        // Print if no solution is found
+        if (!isSolvable) {
+            System.out.println("No solution");
+        }
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        // Read capacities of the jugs and the target amount from the user
+        System.out.print("Enter the capacity of the first jug: ");
+        int jug1Capacity = scanner.nextInt();
+
+        System.out.print("Enter the capacity of the second jug: ");
+        int jug2Capacity = scanner.nextInt();
+
+        System.out.print("Enter the target amount of water: ");
+        int target = scanner.nextInt();
+
+        // Validate the input for the target amount
+        if (target > jug1Capacity && target > jug2Capacity) {
+            System.out.println("Target amount is more than both jug capacities. No solution.");
+            return;
+        }
+
+        // Solve the problem and print the path
+        System.out.println("\n**Water Jug Problem Using BFS**\n");
+        System.out.println("Input - " + jug1Capacity + "L and " + jug2Capacity + "L Jars");
+        System.out.println("Output - " + target + "L\n");
+        System.out.println("Path from initial state to solution state:");
+        System.out.println("\nJug 1\tJug 2");
+
+        BFS(jug1Capacity, jug2Capacity, target);
+    }
+
+    // Pair class to represent the state of the jugs
+    static class Pair {
+        int x, y;
+
+        public Pair(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        // Override equals and hashCode for proper functioning in maps and sets
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Pair pair = (Pair) o;
+            return x == pair.x && y == pair.y;
+        }
+
+        @Override
+        
+        public int hashCode() {
+            return Objects.hash(x, y);
+        }
+    }
+}
+
+/* Explanation of the Code with Detailed Comments
+Pair Class:
+
+Represents a state with x liters in the first jug and y liters in the second jug.
+Overrides equals and hashCode methods for proper functioning in hash maps.
+printPath Method:
+
+Recursively prints the path from the initial state to the target state using the pathMap.
+BFS Method:
+
+Initializes a map visited to keep track of visited states.
+Initializes a map pathMap to store the path from one state to another.
+Uses a queue to perform BFS starting from the initial state (0, 0).
+For each state, checks if the target amount of water is reached in either jug.
+Generates all possible next states (filling, emptying, and transferring water between jugs) and adds them to the queue.
+Prints the path if the target state is reached.
+Prints "No solution" if no solution is found after processing all states.
+Main Method:
+
+Reads user input for the capacities of the jugs and the target amount of water.
+Validates the input for the target amount.
+Calls the BFS method to solve the problem and prints the path.
+Instructions
+Input:
+
+Provide the capacities of both jugs when prompted.
+Enter the target amount of water you want to achieve.
+Output:
+
+The program prints the sequence of operations to achieve the target amount of water in the specified jug.
+If no solution is found, it prints "No solution".
+
+How This Code Implements BFS
+Queue for State Exploration: The queue is used to explore states in the order they were discovered, ensuring that all states at a given "depth" (number of operations from the initial state) are explored before moving to the next depth level.
+
+Visited States: The visited map keeps track of which states have been explored to avoid re-processing and infinite loops.
+
+Path Reconstruction: The pathMap stores the parent state for each state, allowing the reconstruction of the path from the initial state to the target state once the target is reached.
+
+State Transitions: From each state, all possible next states are generated and added to the queue if they have not been visited. This includes filling, emptying, and transferring water between jugs.
+
+By following this systematic level-by-level exploration and tracking visited states, the algorithm ensures that it explores the shortest path to the target state, embodying the essence of BFS.
+*/

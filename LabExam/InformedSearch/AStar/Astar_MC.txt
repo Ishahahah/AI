@@ -1,0 +1,208 @@
+import java.util.*;
+
+// Class representing the state of the problem
+class State implements Comparable<State> {
+    int missionariesLeft; // Number of missionaries on the left bank
+    int cannibalsLeft; // Number of cannibals on the left bank
+    int missionariesRight; // Number of missionaries on the right bank
+    int cannibalsRight; // Number of cannibals on the right bank
+    boolean boatOnLeft; // Indicates if the boat is on the left bank
+    int cost; // g(n) - cost to reach this state from the initial state
+    int heuristic; // h(n) - heuristic value
+
+    // Constructor to initialize the state
+    public State(int missionariesLeft, int cannibalsLeft, int missionariesRight, int cannibalsRight, boolean boatOnLeft) {
+        this.missionariesLeft = missionariesLeft;
+        this.cannibalsLeft = cannibalsLeft;
+        this.missionariesRight = missionariesRight;
+        this.cannibalsRight = cannibalsRight;
+        this.boatOnLeft = boatOnLeft;
+    }
+
+    // Method to check if the state is valid
+    public boolean isValid() {
+        if (missionariesLeft < 0 || cannibalsLeft < 0 || missionariesRight < 0 || cannibalsRight < 0 ||
+                (missionariesLeft > 0 && cannibalsLeft > missionariesLeft) ||
+                (missionariesRight > 0 && cannibalsRight > missionariesRight)) {
+            return false;
+        }
+        return true;
+    }
+
+    // Method to check if the state is the goal state
+    public boolean isGoal() {
+        return missionariesLeft == 0 && cannibalsLeft == 0;
+    }
+
+    // Method to move missionaries and cannibals from one bank to another
+    public State move(int missionaries, int cannibals) {
+        if (boatOnLeft) {
+            return new State(missionariesLeft - missionaries, cannibalsLeft - cannibals,
+                    missionariesRight + missionaries, cannibalsRight + cannibals,
+                    false);
+        } else {
+            return new State(missionariesLeft + missionaries, cannibalsLeft + cannibals,
+                    missionariesRight - missionaries, cannibalsRight - cannibals,
+                    true);
+        }
+    }
+
+    // Heuristic function
+    public int heuristic() {
+        // Heuristic is the sum of missionaries and cannibals on the left bank
+        return missionariesLeft + cannibalsLeft;
+    }
+
+    // Method to compare states based on their total cost and heuristic
+    @Override
+    public int compareTo(State other) {
+        // Compare based on the sum of cost and heuristic
+        return Integer.compare(this.cost + this.heuristic, other.cost + other.heuristic);
+    }
+
+    // Method to check if two states are equal
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        State state = (State) obj;
+        return missionariesLeft == state.missionariesLeft &&
+                cannibalsLeft == state.cannibalsLeft &&
+                missionariesRight == state.missionariesRight &&
+                cannibalsRight == state.cannibalsRight &&
+                boatOnLeft == state.boatOnLeft;
+    }
+
+    // Method to generate a hash code for the state
+    @Override
+    public int hashCode() {
+        return Objects.hash(missionariesLeft, cannibalsLeft, missionariesRight, cannibalsRight, boatOnLeft);
+    }
+
+    // Method to convert state to string for printing
+    @Override
+    public String toString() {
+        String boatSide = boatOnLeft ? "L" : "R";
+        return missionariesLeft + "M" + cannibalsLeft + "C " + boatSide + "  " +
+                missionariesRight + "M" + cannibalsRight + "C";
+    }
+
+    // Setter for cost
+    public void setCost(int cost) {
+        this.cost = cost;
+    }
+
+    // Getter for cost
+    public int getCost() {
+        return cost;
+    }
+}
+
+public class Astar_MC {
+    // Method to perform A* search
+    public static List<State> astar() {
+        PriorityQueue<State> queue = new PriorityQueue<>(); // Priority queue to store states
+        Set<State> visited = new HashSet<>(); // Set to store visited states
+        Map<State, State> parentMap = new HashMap<>(); // Map to store parent states
+
+        // Create initial state with 3 missionaries and 3 cannibals on the left bank
+        State initialState = new State(3, 3, 0, 0, true);
+        initialState.setCost(0); // Set the initial cost to 0
+        initialState.heuristic = initialState.heuristic(); // Initialize heuristic
+        queue.add(initialState); // Add initial state to the queue
+        visited.add(initialState); // Mark initial state as visited
+
+        while (!queue.isEmpty()) {
+            State currentState = queue.poll(); // Get the state with the lowest cost from the queue
+
+            if (currentState.isGoal()) { // Check if the goal state is reached
+                List<State> path = new ArrayList<>(); // List to store the solution path
+                while (currentState != null) {
+                    path.add(currentState); // Add the current state to the path
+                    currentState = parentMap.get(currentState); // Move to the parent state
+                }
+                Collections.reverse(path); // Reverse the path to get the correct order
+                return path; // Return the solution path
+            }
+
+            // Generate next possible states by moving missionaries and cannibals
+            for (int missionaries = 0; missionaries <= 2; missionaries++) {
+                for (int cannibals = 0; cannibals <= 2; cannibals++) {
+                    if (missionaries + cannibals > 0 && missionaries + cannibals <= 2) {
+                        // Create the new state by moving missionaries and cannibals
+                        State newState = currentState.move(missionaries, cannibals);
+                        if (newState.isValid() && !visited.contains(newState)) {
+                            newState.setCost(currentState.getCost() + 1); // Increment the cost
+                            newState.heuristic = newState.heuristic(); // Update heuristic
+                            queue.add(newState); // Add the new state to the queue
+                            visited.add(newState); // Mark the new state as visited
+                            parentMap.put(newState, currentState); // Update the parent map
+                        }
+                    }
+                }
+            }
+        }
+
+        return null; // No solution found
+    }
+
+    // Method to print the steps of the solution path
+    public static void printSteps(List<State> path) {
+        for (int i = 0; i < path.size() - 1; i++) {
+            State from = path.get(i);
+            State to = path.get(i + 1);
+
+            int missionariesMoved = Math.abs(to.missionariesLeft - from.missionariesLeft);
+            int cannibalsMoved = Math.abs(to.cannibalsLeft - from.cannibalsLeft);
+
+            String action = from.boatOnLeft ? "Move " : "Move ";
+            action += missionariesMoved + " missionaries and " + cannibalsMoved + " cannibals to the ";
+            action += from.boatOnLeft ? "right" : "left";
+            System.out.println(action);
+        }
+    }
+
+    public static void main(String[] args) {
+        List<State> solution = astar(); // Perform A* search to find the solution
+        if (solution != null) {
+            System.out.println("Solution found!");
+            for (State state : solution) {
+                System.out.println(state);
+                System.out.println("Heuristic: " + state.heuristic); // Print heuristic value
+            }
+            System.out.println("Steps:");
+            printSteps(solution); // Print the steps of the solution path
+        } else {
+            System.out.println("No solution found.");
+        }
+    }
+}
+/*Sure, let's break down the code step by step:
+
+1. **State Class**:
+   - This class represents the state of the problem. It holds information about the number of missionaries and cannibals on both sides of the river, the position of the boat, the cost to reach this state from the initial state, and the heuristic value.
+   - It has methods to check if the state is valid, if it is the goal state, to move missionaries and cannibals, calculate the heuristic value, and perform comparisons between states.
+   - The `toString()` method provides a string representation of the state for printing purposes.
+   - There are also setter and getter methods for the cost attribute.
+
+2. **Astar_MC Class**:
+   - This class contains the `astar()` method, which performs the A* search algorithm to find the optimal solution to the problem.
+   - A priority queue (`queue`) is used to store states based on their total cost (the sum of the cost to reach the state from the initial state and the heuristic value). States with lower costs are explored first.
+   - A set (`visited`) is used to store visited states to avoid revisiting them.
+   - A map (`parentMap`) is used to store parent states for each state encountered during the search. This is used to reconstruct the solution path once the goal state is reached.
+   - The initial state with 3 missionaries and 3 cannibals on the left bank is created and added to the queue.
+   - The A* search algorithm iterates until the queue is empty or the goal state is reached:
+     - States are dequeued from the priority queue.
+     - If the goal state is reached, the solution path is reconstructed by tracing back through the parent states.
+     - Otherwise, next possible states are generated by moving missionaries and cannibals. Each new state's validity is checked, and if it is valid and not visited, it is added to the queue with updated cost and heuristic values, and its parent state is recorded.
+   - If no solution is found (the queue becomes empty), `null` is returned.
+   
+3. **Printing Solution**:
+   - The `printSteps()` method prints the steps of the solution path. It calculates the number of missionaries and cannibals moved in each step and prints the corresponding action.
+
+4. **Main Method**:
+   - In the `main()` method, the `astar()` method is called to find the solution.
+   - If a solution is found (the returned list is not `null`), it prints the solution states along with their heuristic values and then prints the steps of the solution path.
+   - If no solution is found, it prints "No solution found."
+
+Overall, this implementation efficiently searches the state space using A* algorithm to find the optimal solution to the missionaries and cannibals problem while ensuring that the problem constraints are not violated at any state. */

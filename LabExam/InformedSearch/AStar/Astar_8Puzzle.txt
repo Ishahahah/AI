@@ -1,0 +1,226 @@
+import java.util.*;
+
+class Node {
+    public int[][] data; // Represents the state of the puzzle
+    public int level; // Represents the depth of the node in the search tree
+    public int fval; // Represents the f-value of the node
+    public Node parent; // Represents the parent node in the search tree
+
+    // Constructor to initialize node attributes
+    public Node(int[][] data, int level, int fval) {
+        this.data = data;
+        this.level = level;
+        this.fval = fval;
+    }
+
+    // Method to generate child nodes
+    public ArrayList<Node> generateChild() {
+        ArrayList<Node> children = new ArrayList<>();
+        int[] blankPos = findBlankSpace(); // Find the position of the blank space
+        int[][] directions = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}}; // Define possible moves: Left, Right, Up, Down
+
+        // Generate child nodes by moving the blank space in different directions
+        for (int[] direction : directions) {
+            int x = blankPos[0] + direction[0];
+            int y = blankPos[1] + direction[1];
+            if (x >= 0 && x < data.length && y >= 0 && y < data[0].length) {
+                int[][] newBoard = cloneData(this.data); // Clone the current puzzle state
+                newBoard[blankPos[0]][blankPos[1]] = newBoard[x][y]; // Move the tile to the blank space
+                newBoard[x][y] = 0; // Set the new blank space
+                Node child = new Node(newBoard, this.level + 1, 0); // Create a new child node
+                child.parent = this; // Set the parent of the child node
+                children.add(child); // Add the child node to the list of children
+            }
+        }
+        return children; // Return the list of generated children
+    }
+
+    // Method to find the position of the blank space in the puzzle
+    private int[] findBlankSpace() {
+        for (int i = 0; i < this.data.length; i++) {
+            for (int j = 0; j < this.data[i].length; j++) {
+                if (this.data[i][j] == 0) {
+                    return new int[]{i, j}; // Return the position of the blank space
+                }
+            }
+        }
+        return null; // Return null if blank space is not found (should not occur in a valid puzzle)
+    }
+
+    // Method to clone the puzzle data
+    private int[][] cloneData(int[][] source) {
+        int[][] destination = new int[source.length][source[0].length]; // Create a new array to hold the cloned data
+        for (int i = 0; i < source.length; i++) {
+            System.arraycopy(source[i], 0, destination[i], 0, source[0].length); // Copy each row of data
+        }
+        return destination; // Return the cloned puzzle data
+    }
+}
+
+class Puzzle {
+    private int n; // Represents the size of the puzzle (n x n)
+    private ArrayList<Node> open = new ArrayList<>(); // Represents the open list
+    private ArrayList<Node> closed = new ArrayList<>(); // Represents the closed list
+
+    // Constructor to initialize the puzzle size
+    public Puzzle(int size) {
+        this.n = size;
+    }
+
+    // Method to calculate the f-value of a node
+    public int f(Node start, Node goal) {
+        return h(start.data, goal.data) + start.level; // f-value = g-value (level) + h-value (heuristic)
+    }
+
+    // Method to calculate the heuristic h-value
+    public int h(int[][] start, int[][] goal) {
+        int temp = 0;
+        for (int i = 0; i < this.n; i++) {
+            for (int j = 0; j < this.n; j++) {
+                if (start[i][j] != goal[i][j] && start[i][j] != 0) {
+                    temp += 1; // Increment the heuristic value for each tile that is not in its goal position
+                }
+            }
+        }
+        return temp; // Return the heuristic value
+    }
+
+    // Method to execute the A* algorithm
+    public void process() {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Enter the start state matrix:");
+        int[][] start = accept(scanner); // Accept the start state matrix from the user
+
+        System.out.println("Enter the goal state matrix:");
+        int[][] goal = accept(scanner); // Accept the goal state matrix from the user
+
+        Node startNode = new Node(start, 0, 0); // Create a new node for the start state
+        startNode.fval = f(startNode, new Node(goal, 0, 0)); // Calculate the f-value of the start node
+        open.add(startNode); // Add the start node to the open list
+
+        // Loop until the open list is empty
+        while (!open.isEmpty()) {
+            Node cur = open.get(0); // Get the node with the lowest f-value from the open list
+            if (h(cur.data, goal) == 0) { // If the current state is the goal state
+                System.out.println("Goal state reached!"); // Print a message indicating goal state reached
+                printPath(cur); // Print the solution path
+                break; // Exit the loop
+            }
+
+            open.remove(0); // Remove the current node from the open list
+            closed.add(cur); // Add the current node to the closed list
+
+            ArrayList<Node> children = cur.generateChild(); // Generate child nodes for the current node
+            for (Node child : children) { // Iterate over the child nodes
+                child.fval = f(child, new Node(goal, 0, 0)); // Calculate the f-value of the child node
+                open.add(child); // Add the child node to the open list
+            }
+
+            // Sort the open list based on the f-value of the nodes
+            Collections.sort(open, Comparator.comparingInt(o -> o.fval));
+        }
+    }
+
+    // Method to accept the puzzle matrix from the user
+    private int[][] accept(Scanner scanner) {
+        int[][] puz = new int[this.n][this.n]; // Create a new array to hold the puzzle matrix
+        for (int i = 0; i < this.n; i++) {
+            for (int j = 0; j < this.n; j++) {
+                puz[i][j] = scanner.nextInt(); // Accept input for each element of the puzzle matrix
+            }
+        }
+        return puz; // Return the puzzle matrix
+    }
+
+    // Method to print a matrix
+    private void printMatrix(int[][] matrix) {
+        for (int[] row : matrix) {
+            for (int element : row) {
+                System.out.print(element + " "); // Print each element of the matrix
+            }
+            System.out.println(); // Move to the next line after printing each row
+        }
+    }
+
+    // Method to print the solution path
+    private void printPath(Node goal) {
+        ArrayList<Node> path = new ArrayList<>();
+        Node current = goal;
+        while (current != null) {
+            path.add(current); // Add the current node to the solution path
+            current = current.parent; // Move to the parent node
+        }
+
+        Collections.reverse(path); // Reverse the solution path to print from start to goal
+
+        System.out.println("Solution Path:");
+        for (Node node : path) {
+            printMatrix(node.data); // Print the puzzle state
+            System.out.println("↓"); // Print an arrow to indicate the transition to the next state
+        }
+        System.out.println("Goal reached!");
+    }
+}
+
+public class Astar_8 {
+    public static void main(String[] args) {
+        Puzzle puzzle = new Puzzle(3); // Assuming a 3x3 puzzle
+        puzzle.process(); // Execute the A* algorithm to solve the puzzle
+    }
+}
+
+/* 
+Enter the start state matrix:
+1 8 2
+0 4 3
+7 6 5
+Enter the goal state matrix:
+1 2 3
+4 5 6
+7 8 0
+*/
+// Explanation:
+
+// Node Class: Represents each state of the puzzle. It contains methods to generate child nodes, find the blank space, and clone the puzzle data.
+
+// Puzzle Class: Manages the A* algorithm and puzzle solving process. It calculates the heuristic values, processes the puzzle, and prints the solution path.
+
+// A Algorithm*: A* (A star) is a search algorithm that finds the shortest path between a given initial state and a goal state. It maintains two lists: open list and closed list. The open list contains nodes that are being considered for expansion, while the closed list contains nodes that have already been visited. The algorithm selects the node with the lowest f-value (estimated total cost) from the open list for expansion. It generates child nodes from the selected node, calculates their f-values, and adds them to the open list. This process continues until the goal state is reached or the open list becomes empty.
+
+// Heuristic Function (h): A* uses a heuristic function to estimate the cost of reaching the goal state from a given state. In this implementation, Manhattan distance is used as the heuristic function. It calculates the sum of the horizontal and vertical distances of each tile from its goal position.
+
+// Accept Method: Reads the puzzle matrix from the user input.
+
+// Print Matrix Method: Prints a 2D matrix.
+
+// Print Path Method: Prints the solution path by tracing back from the goal node to the start node.
+
+// Inversion Concept:
+
+// Inversion refers to the pair of tiles (a, b) where a appears before b
+
+
+// continue
+// ChatGPT
+// in the goal state but a > b. In a solvable puzzle, the number of inversions must be even. If the number of inversions is odd, the puzzle is unsolvable.
+
+// For example, consider the following puzzle:
+
+// Copy code
+// 1 2 3
+// 4 5 6
+// 8 7 0
+// Here, there is an inversion (8, 7) because 8 appears before 7, but 8 > 7. Since there is one inversion, the puzzle is unsolvable.
+
+// A* algorithm takes into account the heuristic function (h-value) along with the cost incurred so far (g-value) to determine which node to explore next. The heuristic function guides the search towards the goal state by providing an estimate of the remaining cost. This helps A* to efficiently explore the search space and find the optimal solution.
+
+// In the provided Java code, the f() method calculates the total cost (f-value) of a node by adding the heuristic value (h-value) to the cost incurred so far (g-value), where g-value is represented by the level of the node in the search tree. The h() method calculates the heuristic value based on the Manhattan distance between the current state and the goal state.
+
+// The process() method in the Puzzle class implements the A* algorithm. It initializes the start state, calculates the f-value for the start node, and adds it to the open list. Then, it iteratively selects nodes from the open list, generates their child nodes, calculates their f-values, and adds them to the open list. The process continues until the goal state is reached or the open list becomes empty.
+
+// The solution path is printed using the printPath() method, which traces back from the goal node to the start node and prints each state along the path. Finally, the main() method creates a Puzzle object and starts the puzzle-solving process.
+
+
+
+
+

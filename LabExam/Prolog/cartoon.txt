@@ -1,0 +1,73 @@
+% Define the knowledge base with cartoon attributes
+cartoon(tom_and_jerry, [comedy, animated, classic, 4.5, 10, kids, cat_and_mouse, short_episodes, 2]).
+cartoon(oggy_and_the_cockroaches, [comedy, animated, modern, 4.4, 7, kids, cat_vs_cockroaches, humor, 5]).
+cartoon(shinchan, [comedy, animated, modern, 4.6, 6, teens, mischievous_kid, humor, 4]).
+cartoon(adventure_time, [adventure, animated, fantasy, 4.6, 10, kids, magical_world, friendship, 3]).
+cartoon(shinchan, [comedy, animated, modern, 4.6, 6, teens, mischievous_kid, humor, 4]).
+cartoon(paw_patrol, [kids, animated, modern, 4.3, 9, animals, rescue_missions, teamwork, 2]).
+cartoon(looney_tunes, [comedy, animated, classic, 4.4, 12, slapstick, iconic_characters, gags, 2]).
+cartoon(scooby_doo, [mystery, animated, classic, 4.4, 10, teens, mysteries, ghosts, 3]).
+cartoon(powerpuff_girls, [action, animated, modern, 4.5, 9, superheroes, girls, villains, 3]).
+cartoon(ducktales, [comedy, animated, classic, 4.2, 10, family, adventures, treasure_hunting, 2]).
+cartoon(my_little_pony, [kids, animated, modern, 4.1, 9, magical, friendship, ponies, 3]).
+cartoon(chhota_bheem, [adventure, animated, modern, 4.3, 8, kids, Indian_folklore, fantasy, 3]).
+cartoon(motu_patlu, [comedy, animated, modern, 4.2, 9, kids, slapstick, friendship, 4]).
+cartoon(roll_no_21, [comedy, animated, modern, 4.1, 7, kids, superhero, adventure, 3]).
+cartoon(krishna_balram, [adventure, animated, modern, 4.0, 5, kids, mythological, action, 2]).
+cartoon(chacha_chaudhary, [adventure, animated, classic, 4.7, 6, kids, detective, intellect, 3]).
+
+check_cartoon_preferences(Cartoon) :-
+    cartoon(Cartoon, [Genre, AnimationStyle, Era, Rating, Episodes, TargetAudience, Theme, Aspects, Seasons]),
+    ask_preferences('genre', Genre),
+    ask_preferences('animation style', AnimationStyle),
+    ask_preferences('era', Era),
+    ask_preferences('rating', Rating),
+    ask_preferences('number of episodes', Episodes),
+    ask_preferences('target audience', TargetAudience),
+    ask_preferences('theme', Theme),
+    ask_preferences('aspects', Aspects),
+    ask_preferences('number of seasons', Seasons),
+    format('The cartoon ~w suits your preferences.', [Cartoon]).
+
+suggest_cartoon :-
+    write('What genre do you like? (comedy/action/adventure/kids/mystery): '),
+    read(Genre),
+    write('Do you prefer classic, modern, or animated-style cartoons? (classic/modern/animated): '),
+    read(AnimationStyle),
+    write('Do you prefer cartoons from the classic era or modern era? (classic/modern): '),
+    read(Era),
+    write('What is your minimum preferred rating (e.g., 4.0): '),
+    read(MinRating),
+    write('How many episodes are you willing to watch? (e.g., 10): '),
+    read(MaxEpisodes),
+    write('Is the target audience important to you? (e.g., kids/family/adult): '),
+    read(TargetAudience),
+    write('Do you have a preferred theme or topic? (e.g., superheroes/mysteries/humor): '),
+    read(Theme),
+    write('Are there specific aspects you want in the cartoon? (e.g., diversity/action/epic): '),
+    read(Aspects),
+    write('How many seasons are you willing to watch? (e.g., 3): '),
+    read(MaxSeasons),
+    find_matching_cartoon(Genre, AnimationStyle, Era, MinRating, MaxEpisodes, TargetAudience, Theme, Aspects, MaxSeasons, Cartoon),
+    format('Recommended cartoon to watch: ~w', [Cartoon]).
+
+find_matching_cartoon(Genre, AnimationStyle, Era, MinRating, MaxEpisodes, TargetAudience, Theme, Aspects, MaxSeasons, Cartoon) :-
+    cartoon(Cartoon, [Genre, AnimationStyle, Era, Rating, Episodes, Audience, Theme, CartoonAspects, Seasons]),
+    Rating >= MinRating,
+    Episodes =< MaxEpisodes,
+    Audience == TargetAudience,
+    Theme == Theme,
+    CartoonAspects == Aspects,
+    Seasons =< MaxSeasons.
+
+% Ask user preferences
+ask_preferences(AttributeLabel, Attribute) :-
+    format('Do you like ~w? (yes/no) ', [AttributeLabel]),
+    read(Answer),
+    Answer == yes.
+
+% Entry point
+start:-
+    write('Welcome to the Cartoon Recommender System!'), nl,
+    write('Type start. to start the Recommender'), nl,
+    suggest_cartoon.
