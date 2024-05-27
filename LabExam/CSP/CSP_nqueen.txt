@@ -1,8 +1,8 @@
-package LAB;
 import java.util.*;
 
-public class CSP_nqueen {
+public class nqueen {
     static int N; // Define N as a class variable
+    static List<int[][]> solutions = new ArrayList<>();
 
     // Function to check if placing a queen at (row, col) is safe
     static boolean isSafe(int[][] board, int row, int col) {
@@ -26,13 +26,12 @@ public class CSP_nqueen {
 
     static boolean solveNQueens(int[][] board, int row) {
         if (row == N) { // all queens are placed
-            // Print the solution
-            for (int i = 0; i < N; ++i) {
-                for (int j = 0; j < N; ++j)
-                    System.out.print(board[i][j] + " ");
-                System.out.println();
-            }
-            return true;
+            // Store the solution
+            int[][] solution = new int[N][N];
+            for (int i = 0; i < N; ++i)
+                solution[i] = board[i].clone();
+            solutions.add(solution);
+            return false; // continue to find all solutions
         }
 
         for (int col = 0; col < N; ++col) {
@@ -40,12 +39,11 @@ public class CSP_nqueen {
                 board[row][col] = 1; // Place the queen
 
                 // Recur to place rest of the queens
-                if (solveNQueens(board, row + 1))
-                    return true;
+                solveNQueens(board, row + 1);
+                
                 // If it doesn't lead to a solution, backtrack
                 board[row][col] = 0;
             }
-
         }
         return false;
     }
@@ -56,8 +54,19 @@ public class CSP_nqueen {
         N = sc.nextInt(); // Read N from user input
         int[][] board = new int[N][N]; // Initialize chessboard
 
-        if (!solveNQueens(board, 0)) {
+        solveNQueens(board, 0);
+
+        if (solutions.isEmpty()) {
             System.out.println("Solution does not exist.");
+        } else {
+            for (int[][] solution : solutions) {
+                for (int i = 0; i < N; ++i) {
+                    for (int j = 0; j < N; ++j)
+                        System.out.print(solution[i][j] + " ");
+                    System.out.println();
+                }
+                System.out.println();
+            }
         }
     }
 }
@@ -102,4 +111,40 @@ Logic and Concepts:
 •	Optimization:
 •	The code optimizes the solution space by pruning branches that cannot lead to a valid solution.
 •	It avoids unnecessary computations by using the isSafe function to check for conflicts before proceeding with the placement of each queen.
+
+
+The code you've provided is indeed a solution to the N-Queens problem using a backtracking approach, which can be considered a form of Constraint Satisfaction Problem (CSP). Here’s an explanation of how it works and how it fits the CSP framework:
+
+Explanation of the Code
+Class and Main Method:
+
+The nqueen class includes the main method where the program starts.
+The value of N is read from the user input, which defines the size of the chessboard (N x N).
+isSafe Method:
+
+This method checks whether placing a queen at position (row, col) is safe.
+It ensures no other queens are in the same column, and on the same upper left or upper right diagonals.
+solveNQueens Method:
+
+This is a recursive method that attempts to place queens row by row.
+If all queens are placed (row == N), it prints the board and returns true.
+For each column in the current row, it checks if placing a queen is safe.
+If placing the queen leads to a solution (solveNQueens(board, row + 1) returns true), it keeps the queen there.
+If not, it backtracks by removing the queen and trying the next column.
+Main Execution:
+
+The main method initializes the board and calls solveNQueens.
+If no solution is found, it prints "Solution does not exist."
+How It Fits the CSP Framework
+A Constraint Satisfaction Problem (CSP) is defined by:
+
+Variables: The positions of queens on the board.
+Domains: Possible positions on the board (each queen can be placed in any cell of a row).
+Constraints: No two queens can attack each other, which translates to no two queens sharing the same row, column, or diagonal.
+The N-Queens problem is a classic example of a CSP:
+
+Variables: Positions of the queens in each row.
+Domains: Columns in which a queen can be placed in each row.
+Constraints: The isSafe function ensures the constraints are respected by checking columns and diagonals.
+The backtracking algorithm used here systematically tries to place queens while adhering to these constraints. If it encounters a conflict, it backtracks to the previous step and tries the next possibility, which is a common approach in solving CSPs
 
