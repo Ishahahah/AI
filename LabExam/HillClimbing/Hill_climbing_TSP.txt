@@ -1,0 +1,107 @@
+package LAB;
+import java.util.*;
+public class hc {
+	
+
+
+	    private static int[][] distanceMatrix;
+
+	    private static int totalDistance(List<Integer> path) {
+	        // Calculate the total distance traveled in the given path
+	        int total = 0;
+	        for (int i = 0; i < path.size() - 1; i++) {
+	            total += distanceMatrix[path.get(i)][path.get(i + 1)];
+	        }
+	        total += distanceMatrix[path.get(path.size() - 1)][path.get(0)]; // Return to starting city
+	        return total;
+	    }
+
+	    private static List<Integer> generateRandomPath(int numCities) {
+	        List<Integer> path = new ArrayList<>();
+	        for (int i = 0; i < numCities; i++) {
+	            path.add(i);
+	        }
+	        Random rand = new Random();
+	        for (int i = numCities - 1; i > 0; i--) {
+	            int j = rand.nextInt(i + 1);
+	            int temp = path.get(i);
+	            path.set(i, path.get(j));
+	            path.set(j, temp);
+	        }
+	        return path;
+	    }
+
+	    public static void hillClimbingTSP(int numCities, int maxIterations) {
+	        List<Integer> currentPath = generateRandomPath(numCities); // Initial solution
+	        int currentDistance = totalDistance(currentPath);
+	        for (int it = 0; it < maxIterations; it++) {
+	            // Generate a neighboring solution by swapping two random cities
+	            List<Integer> neighborPath = new ArrayList<>(currentPath);
+	            int i = new Random().nextInt(numCities);
+	            int j = new Random().nextInt(numCities);
+	            int temp = neighborPath.get(i);
+	            neighborPath.set(i, neighborPath.get(j));
+	            neighborPath.set(j, temp);
+	            int neighborDistance = totalDistance(neighborPath);
+	            // If the neighbor solution is better, move to it
+	            if (neighborDistance < currentDistance) {
+	                currentPath = neighborPath;
+	                currentDistance = neighborDistance;
+	            }
+	        }
+	        System.out.print("Optimal path: ");
+	        for (int city : currentPath) {
+	            System.out.print(city + " ");
+	        }
+	        System.out.println();
+	        System.out.println("Total distance: " + currentDistance);
+	    }
+
+	    public static void main(String[] args) {
+	        Scanner scanner = new Scanner(System.in);
+
+	        System.out.print("Enter the number of cities: ");
+	        int numCities = scanner.nextInt();
+
+	        System.out.print("Enter the maximum number of iterations: ");
+	        int maxIterations = scanner.nextInt();
+
+	        // Initialize distance matrix
+	        distanceMatrix = new int[numCities][numCities];
+	        System.out.println("Enter the distance matrix:");
+	        for (int i = 0; i < numCities; i++) {
+	            for (int j = 0; j < numCities; j++) {
+	                distanceMatrix[i][j] = scanner.nextInt();
+	            }
+	        }
+
+	        hillClimbingTSP(numCities, maxIterations);
+
+	        scanner.close();
+	    }
+	}
+
+
+
+
+Hill climbing is a heuristic search algorithm used to find the best solution to a problem among a large set of possible solutions. It starts with an arbitrary solution to the problem and iteratively improves it by making small modifications, evaluating each modified solution, and selecting the one that leads to the greatest improvement.
+In the context of the Traveling Salesman Problem (TSP), the goal is to find the shortest possible route that visits each city exactly once and returns to the original city. This problem is often represented using a distance matrix, where each cell (i, j) represents the distance between city i and city j.
+Now, let's break down the hill climbing TSP code:
+1.	distanceMatrix: This is a 2D array representing the distances between each pair of cities.
+2.	totalDistance(List<Integer> path): This function calculates the total distance traveled along a given path. It iterates through the cities in the path, summing up the distances between consecutive cities and adding the distance from the last city back to the starting city.
+3.	generateRandomPath(int numCities): This function generates a random initial solution (path) by shuffling the indices of the cities.
+4.	hillClimbingTSP(int numCities, int maxIterations): This is the main hill climbing algorithm for the TSP. It starts by generating a random initial path and iteratively improves it. In each iteration, it generates a neighboring solution by randomly swapping two cities in the current path. If the neighboring solution has a shorter total distance, it becomes the new current path. This process continues for the specified number of iterations.
+5.	main(String[] args): In the main method, the user is prompted to input the number of cities, the maximum number of iterations, and the distance matrix. Then, the hillClimbingTSP function is called with these inputs.
+
+Enter the number of cities: 4
+Enter the maximum number of iterations: 1000
+Enter the distance matrix:
+0 10 15 20
+10 0 35 25
+15 35 0 30
+20 25 30 0
+Optimal path: 2 3 1 0 
+Total distance: 80
+
+
+

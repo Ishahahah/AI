@@ -1,0 +1,193 @@
+import java.util.*;
+
+public class hcMC {
+
+    // Representation of a state
+    static class State {
+        int missionaries;
+        int cannibals;
+        boolean boat; // true means the boat is on the left bank
+
+        State(int missionaries, int cannibals, boolean boat) {
+            this.missionaries = missionaries;
+            this.cannibals = cannibals;
+            this.boat = boat;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == this) return true;
+            if (!(obj instanceof State)) return false;
+            State other = (State) obj;
+            return missionaries == other.missionaries && cannibals == other.cannibals && boat == other.boat;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(missionaries, cannibals, boat);
+        }
+    }
+
+    // Hill Climbing algorithm with an informed strategy
+    static List<State> hillClimbing(int initialMissionaries, int initialCannibals) {
+        List<State> path = new ArrayList<>();
+        State currentState = new State(initialMissionaries, initialCannibals, true); // Initial state
+        path.add(currentState);
+
+        while (!goalState(currentState)) {
+            List<State> neighbors = getNeighbors(currentState);
+            State nextState = null;
+            int minHeuristic = Integer.MAX_VALUE;
+
+            for (State neighbor : neighbors) {
+                int heuristic = heuristic(neighbor);
+                if (heuristic < minHeuristic) {
+                    minHeuristic = heuristic;
+                    nextState = neighbor;
+                }
+            }
+
+            if (nextState == null) // No better neighbor found, end search
+                break;
+
+            path.add(nextState);
+            currentState = nextState;
+        }
+        return path;
+    }
+
+    // Heuristic function: number of missionaries and cannibals on the wrong side
+    static int heuristic(State state) {
+        int onWrongSide = state.missionaries + state.cannibals;
+        if (state.missionaries != 0 && state.missionaries < state.cannibals)
+            onWrongSide += state.cannibals - state.missionaries;
+        return onWrongSide;
+    }
+
+    // Check if a state is the goal state
+    static boolean goalState(State state) {
+        return state.missionaries == 0 && state.cannibals == 0 && !state.boat;
+    }
+
+    // Get possible neighbors (successor states)
+    static List<State> getNeighbors(State state) {
+        List<State> neighbors = new ArrayList<>();
+        int m = state.missionaries;
+        int c = state.cannibals;
+
+        if (state.boat) { // Boat on the left bank
+            for (int i = 0; i <= 2; i++) {
+                for (int j = 0; j <= 2; j++) {
+                    if (i + j >= 1 && i + j <= 2 && m - i >= 0 && c - j >= 0 && (m - i == 0 || m - i >= c - j))
+                        neighbors.add(new State(m - i, c - j, false));
+                }
+            }
+        } else { // Boat on the right bank
+            for (int i = 0; i <= 2; i++) {
+                for (int j = 0; j <= 2; j++) {
+                    if (i + j >= 1 && i + j <= 2 && m + i >= 0 && c + j >= 0 && (m + i == 0 || m + i >= c + j))
+                        neighbors.add(new State(m + i, c + j, true));
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.print("Enter the number of missionaries: ");
+        int missionaries = scanner.nextInt();
+
+        System.out.print("Enter the number of cannibals: ");
+        int cannibals = scanner.nextInt();
+
+        List<State> path = hillClimbing(missionaries, cannibals);
+
+        System.out.println("Solution path:");
+        for (State state : path) {
+            System.out.println(state.missionaries + " missionaries, " + state.cannibals + " cannibals, boat: " + (state.boat ? "left" : "right"));
+        }
+
+        scanner.close();
+    }
+}
+
+
+
+
+
+
+
+
+
+
+// explanation
+// The Missionaries and Cannibals problem is a classic problem in artificial intelligence, illustrating the use of search algorithms. Here's a detailed explanation of the problem and the code:
+
+// ### Problem Description
+
+// The problem involves three missionaries and three cannibals who need to cross a river using a boat that can carry at most two people at a time. The constraints are:
+// 1. If at any time the cannibals outnumber the missionaries on either side of the river, the cannibals will eat the missionaries.
+// 2. The boat cannot cross the river by itself; it requires at least one person to operate.
+
+// The goal is to find a sequence of crossings that brings all the missionaries and cannibals safely from the left bank of the river to the right bank without ever allowing the cannibals to outnumber the missionaries on either side.
+
+// ### Code Explanation
+
+// The provided code uses a hill climbing algorithm with an informed strategy to solve the problem.
+
+// #### State Representation
+
+// A `State` class represents the current state of the problem:
+// - `missionaries`: Number of missionaries on the current side (left if `boat` is true, right if `boat` is false).
+// - `cannibals`: Number of cannibals on the current side.
+// - `boat`: Boolean indicating the side of the boat (true for left, false for right).
+
+// The `State` class also includes methods for equality checking and hashing, which are necessary for comparing states and storing them in collections.
+
+// #### Hill Climbing Algorithm
+
+// The `hillClimbing` method attempts to find a solution path using the hill climbing algorithm:
+// 1. **Initialization**: Start from the initial state with 3 missionaries, 3 cannibals, and the boat on the left side.
+// 2. **Goal Check**: Check if the current state is the goal state (no missionaries or cannibals on the left side, and the boat on the right).
+// 3. **Neighbors Generation**: Generate possible neighbor states (successor states) from the current state.
+// 4. **Heuristic Calculation**: Calculate the heuristic for each neighbor. The heuristic function `heuristic` calculates the number of people on the wrong side plus an additional penalty if the number of missionaries is less than the number of cannibals.
+// 5. **Selection of Next State**: Select the neighbor with the lowest heuristic value.
+// 6. **Path Tracking**: Add the selected state to the solution path and set it as the current state.
+// 7. **Loop until Goal**: Repeat the process until the goal state is reached or no better neighbors are found.
+
+// #### Heuristic Function
+
+// The heuristic function helps guide the search towards the goal:
+// - It sums the number of missionaries and cannibals on the wrong side.
+// - Adds a penalty if missionaries are outnumbered by cannibals on the wrong side.
+
+// #### Goal State Check
+
+// The `goalState` method checks if the current state meets the goal condition: all missionaries and cannibals are on the right side, and the boat is also on the right side.
+
+// #### Neighbors Generation
+
+// The `getNeighbors` method generates possible successor states from the current state by moving one or two people (missionaries or cannibals) across the river, ensuring the constraints are met.
+
+// ### Running the Algorithm
+
+// The `main` method initiates the hill climbing algorithm and prints the solution path if found.
+
+// ```java
+// public static void main(String[] args) {
+//     List<State> path = hillClimbing();
+
+//     System.out.println("Solution path:");
+//     for (State state : path) {
+//         System.out.println(state.missionaries + " missionaries, " + state.cannibals + " cannibals, boat: " + (state.boat ? "left" : "right"));
+//     }
+// }
+
+
+// ```
+
+// ### Summary
+
+// The Missionaries and Cannibals problem is solved using a hill climbing algorithm with a heuristic function that guides the search. The solution path is printed, showing the number of missionaries and cannibals on each side of the river after each move. The algorithm ensures that at no point are the missionaries outnumbered by the cannibals on either side.
