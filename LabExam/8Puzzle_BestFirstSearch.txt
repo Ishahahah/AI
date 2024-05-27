@@ -1,0 +1,203 @@
+import java.util.*;
+
+public class EightPuzzleSolver {
+
+    // Class to represent the state of the puzzle
+    static class State implements Comparable<State> {
+        List<List<Integer>> puzzle;  // The puzzle configuration
+        int heuristic;  // Heuristic value (Manhattan distance)
+        String hash;  // Unique hash for the state
+
+        // Constructor to initialize the state
+        State(List<List<Integer>> p, int h) {
+            puzzle = p;
+            heuristic = h;
+            hash = convertToString(puzzle);  // Convert puzzle to a string for hashing
+        }
+
+        // Compare states based on heuristic value for priority queue ordering
+        @Override
+        public int compareTo(State other) {
+            return Integer.compare(this.heuristic, other.heuristic);
+        }
+
+        // Convert puzzle state to a string for hashing
+        String convertToString(List<List<Integer>> state) {
+            StringBuilder str = new StringBuilder();
+            for (List<Integer> row : state) {
+                for (int value : row) {
+                    str.append(value).append(",");
+                }
+            }
+            return str.toString();
+        }
+    }
+
+    // Calculate Manhattan distance between current state and goal state
+    static int manhattanDistance(List<List<Integer>> state, List<List<Integer>> goalState) {
+        int distance = 0;
+        for (int i = 0; i < 3; i++) {  // Loop through rows
+            for (int j = 0; j < 3; j++) {  // Loop through columns
+                int value = state.get(i).get(j);
+                if (value != 0) {  // Ignore the empty tile
+                    for (int k = 0; k < 3; k++) {
+                        for (int l = 0; l < 3; l++) {
+                            if (value == goalState.get(k).get(l)) {  // Find the target position in the goal state
+                                distance += Math.abs(k - i) + Math.abs(l - j);  // Calculate Manhattan distance
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return distance;  // Return total Manhattan distance
+    }
+
+    // Check if the current state is the goal state
+    static boolean isGoalState(List<List<Integer>> state, List<List<Integer>> goalState) {
+        return state.equals(goalState);  // Compare current state to goal state
+    }
+
+    // Generate all possible moves from the current state
+    static List<List<List<Integer>>> generateMoves(List<List<Integer>> state) {
+        List<List<List<Integer>>> moves = new ArrayList<>();
+        int[] dx = {-1, 1, 0, 0};  // Possible move directions (up, down)
+        int[] dy = {0, 0, -1, 1};  // Possible move directions (left, right)
+        int x = 0, y = 0;
+
+        // Find the position of the empty tile (0)
+        outerLoop:
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (state.get(i).get(j) == 0) {
+                    x = i;
+                    y = j;
+                    break outerLoop;
+                }
+            }
+        }
+
+        // Generate all possible moves
+        for (int k = 0; k < 4; k++) {
+            int newX = x + dx[k];
+            int newY = y + dy[k];
+            if (newX >= 0 && newX < 3 && newY >= 0 && newY < 3) {
+                List<List<Integer>> newState = new ArrayList<>();
+                for (List<Integer> row : state) {
+                    newState.add(new ArrayList<>(row));
+                }
+                // Manually swap the elements
+                int temp = newState.get(newX).get(newY);
+                newState.get(newX).set(newY, 0);
+                newState.get(x).set(y, temp);
+                moves.add(newState);  // Add the new state to the list of possible moves
+            }
+        }
+        return moves;  // Return all possible moves
+    }
+
+    // Solve the puzzle using best-first search
+    static List<List<Integer>> solvePuzzle(List<List<Integer>> initialState, List<List<Integer>> goalState, List<State> steps) {
+        PriorityQueue<State> frontier = new PriorityQueue<>();  // Priority queue for best-first search
+        Set<String> explored = new HashSet<>();  // Set to keep track of explored states
+        int stepCounter = 0;
+
+        int initialHeuristic = manhattanDistance(initialState, goalState);  // Calculate initial heuristic
+        State initial = new State(initialState, initialHeuristic);  // Create the initial state
+        frontier.add(initial);  // Add initial state to the frontier
+
+        while (!frontier.isEmpty()) {
+            State current = frontier.poll();  // Get the state with the lowest heuristic
+            steps.add(current);  // Add current state to the steps
+            stepCounter++;
+
+            if (isGoalState(current.puzzle, goalState)) {  // Check if current state is the goal state
+                return current.puzzle;  // Return the solution
+            }
+
+            explored.add(current.hash);  // Mark current state as explored
+
+            List<List<List<Integer>>> nextMoves = generateMoves(current.puzzle);  // Generate possible moves
+            for (List<List<Integer>> nextState : nextMoves) {
+                String nextStateString = current.convertToString(nextState);
+                if (!explored.contains(nextStateString)) {  // Check if next state has been explored
+                    int heuristic = manhattanDistance(nextState, goalState);  // Calculate heuristic for next state
+                    State nextStateNode = new State(nextState, heuristic);  // Create new state
+                    frontier.add(nextStateNode);  // Add new state to the frontier
+                }
+            }
+        }
+        return Collections.emptyList();  // Return empty list if no solution found
+    }
+
+    // Print the puzzle state
+    static void printPuzzle(List<List<Integer>> puzzle) {
+        for (List<Integer> row : puzzle) {
+            for (int value : row) {
+                if (value == 0) {
+                    System.out.print("   ");  // Print space for the empty tile
+                } else {
+                    System.out.print(value + " ");  // Print tile value
+                }
+            }
+            System.out.println();
+        }
+    }
+
+    // Input the puzzle configuration from the user
+    static List<List<Integer>> inputPuzzle(String prompt, Scanner scanner) {
+        List<List<Integer>> puzzle = new ArrayList<>();
+        System.out.println(prompt + " (use 0 for empty tile):");
+        for (int i = 0; i < 3; i++) {
+            System.out.print("Row " + (i + 1) + ": ");
+            List<Integer> row = new ArrayList<>();
+            for (int j = 0; j < 3; j++) {
+                row.add(scanner.nextInt());  // Read tile value
+            }
+            puzzle.add(row);  // Add row to puzzle
+        }
+        return puzzle;  // Return puzzle configuration
+    }
+
+    // Main method to run the solver
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        List<List<Integer>> initialState = inputPuzzle("Enter the initial puzzle configuration", scanner);  // Input initial state
+        List<List<Integer>> goalState = inputPuzzle("Enter the goal puzzle configuration", scanner);  // Input goal state
+
+        List<State> steps = new ArrayList<>();  // List to keep track of steps
+        List<List<Integer>> solution = solvePuzzle(initialState, goalState, steps);  // Solve the puzzle
+
+        if (!solution.isEmpty()) {  // If solution found
+            System.out.println("\nSolution:");
+            for (int i = 0; i < steps.size(); i++) {
+                System.out.println("Step " + (i + 1) + ":");
+                printPuzzle(steps.get(i).puzzle);  // Print each step
+                System.out.println();
+            }
+            System.out.println("Total steps: " + steps.size());  // Print total steps
+        } else {
+            System.out.println("\nNo solution found.");  // If no solution found
+        }
+        scanner.close();  // Close scanner
+    }
+}
+
+
+
+Explanation of Best-First Search:
+Heuristic Calculation: The algorithm uses the Manhattan distance as a heuristic to estimate the distance from the current state to the goal state. This helps in guiding the search towards the goal more efficiently.
+
+Priority Queue: The PriorityQueue (frontier) stores states and prioritizes them based on their heuristic values. States with lower heuristic values are explored first, which aligns with the best-first search strategy.
+
+State Comparison: The State class implements Comparable to ensure the priority queue orders states based on their heuristic values.
+
+State Generation: The generateMoves function creates new states by moving the empty tile (0) in all possible directions, generating potential next states to explore.
+
+Goal Check: The algorithm continually checks if the current state is the goal state. If it is, the solution is returned.
+
+Exploration: The algorithm maintains a set of explored states to avoid re-exploration, ensuring efficiency.
+
+Best-First Search: The main loop of the solvePuzzle function polls the state with the lowest heuristic value from the priority queue and explores its possible moves. This is the essence of best-first search, where the "best" state to explore next is chosen based on the heuristic.
+
+This approach ensures that the algorithm explores the most promising paths first, potentially leading to a faster solution compared to uninformed search methods like breadth-first search or depth-first search.
