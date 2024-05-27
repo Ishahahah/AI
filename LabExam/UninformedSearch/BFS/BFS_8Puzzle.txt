@@ -1,0 +1,301 @@
+import java.util.*;
+
+class Point {
+    private int x;
+    private int y;
+
+    Point(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public int getY() {
+        return y;
+    }
+}
+
+class PuzzleSolver {
+    private int[][] initial;
+    private int[][] goal;
+    private ArrayList<int[][]> frontier;
+    private int n = 3;
+    private boolean foundSol = false;
+    private long totalNodes = 0;
+    private HashMap<String, Integer> visited;
+    private Point[] goalInfo;
+
+    PuzzleSolver(int[][] initial, int[][] goal) {
+        this.initial = new int[n][n];
+        this.goal = new int[n][n];
+        this.initial = initial;
+        this.goal = goal;
+
+        frontier = new ArrayList<>();
+        visited = new HashMap<>();
+        goalInfo = new Point[n * n];
+
+        // Build the coordinates table for the goal state to speed up heuristic calculations
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                goalInfo[goal[i][j]] = new Point(i, j);
+            }
+        }
+    }
+
+    public void bfs() {
+        reset();
+        while (!foundSol) {
+            if (frontier.isEmpty()) {
+                System.out.println("No solution found");
+                return;
+            }
+
+            // Get the current state, as BFS is FIFO, grab the shallowest node
+            int[][] curState = frontier.remove(0);
+            totalNodes++;
+
+            // Print the current state
+            System.out.println("Current node:" + totalNodes);
+            printBoard(curState);
+
+            // Check whether the current state is the final state
+            if (isGoal(curState)) {
+                foundSol = true;
+                System.out.println("Solution reached!");
+                System.out.println("BFS: Nodes traversed: " + totalNodes);
+                return;
+            } else {
+                // Explore the children
+                createChildren(curState);
+            }
+        }
+    }
+
+    public void reset() {
+        // Clean out everything before running a different search algorithm
+        totalNodes = 0;
+        foundSol = false;
+        frontier.clear();
+        visited.clear();
+
+        // Add initial state to the frontier
+        frontier.add(initial);
+
+        // Add initial to visited
+        visited.put(createTag(initial), 0);
+    }
+
+    public String createTag(int[][] state) {
+        StringBuilder tag = new StringBuilder();
+        for (int[] row : state) {
+            for (int val : row) {
+                tag.append(val);
+            }
+        }
+        return tag.toString();
+    }
+
+    public void printBoard(int[][] state) {
+        for (int[] row : state) {
+            for (int val : row) {
+                System.out.print(val + " ");
+            }
+            System.out.println();
+        }
+        System.out.println();
+    }
+
+    public boolean isGoal(int[][] state) {
+        return Arrays.deepEquals(state, goal);
+    }
+
+    public int[][] clone2d(int[][] arr) {
+        int[][] newArr = new int[n][];
+        for (int i = 0; i < n; i++) {
+            newArr[i] = arr[i].clone();
+        }
+        return newArr;
+    }
+
+    public void createChildren(int[][] curState) {
+        // First find the empty tile (we denote it by 0)
+        int zeroX = -1, zeroY = -1;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                if (curState[i][j] == 0) {
+                    zeroX = i;
+                    zeroY = j;
+                }
+            }
+        }
+
+        int[] dx = {0, 0, 1, -1};
+        int[] dy = {1, -1, 0, 0};
+
+        for (int dir = 0; dir < 4; dir++) {
+            int newX = zeroX + dx[dir];
+            int newY = zeroY + dy[dir];
+
+            if (newX >= 0 && newX < n && newY >= 0 && newY < n) {
+                int[][] newState = clone2d(curState);
+                newState[zeroX][zeroY] = newState[newX][newY];
+                newState[newX][newY] = 0;
+
+                String tag = createTag(newState);
+                if (!visited.containsKey(tag)) {
+                    frontier.add(newState);
+                    visited.put(tag, 0);
+                }
+            }
+        }
+    }
+}
+
+public class BFS_8 {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        int n = 3;
+        int[][] initial = new int[n][n];
+        int[][] goal = new int[n][n];
+
+        System.out.println("Enter the initial state:");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                initial[i][j] = sc.nextInt();
+            }
+        }
+
+        System.out.println("Enter the goal state:");
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                goal[i][j] = sc.nextInt();
+            }
+        }
+
+        PuzzleSolver solver = new PuzzleSolver(initial, goal);
+        solver.bfs();
+
+        sc.close();
+    }
+}
+/*Enter the initial state:
+0 1 2
+3 4 5
+6 7 8
+Enter the goal state:
+1 2 0
+3 4 5
+6 7 8 */
+/*
+ Sure, let's break down the bfs method line by line to explain how it works and verify that it is indeed implementing the Breadth-First Search (BFS) algorithm for solving the 8-puzzle problem.
+
+Class and Method Setup
+java
+Copy code
+class PuzzleSolver
+{
+    // Class variables for the initial and goal states, temporary board, frontier, etc.
+    private int initial[][]; 
+    private int goal[][]; 
+    private int temp[][];
+    private ArrayList<int[][]> frontier; 
+    private int n = 3; 
+    private boolean found_sol = false; 
+    private long total_nodes = 0; 
+    private HashMap<String, Integer> visited; 
+    private String tag; 
+    private points goalInfo[]; 
+
+    // Constructor to initialize the puzzle solver with the initial and goal states
+    PuzzleSolver(int initial[][], int goal[][])
+    {
+        this.initial = new int[n][n]; 
+        this.goal = new int[n][n]; 
+        temp = new int[n][n]; 
+        visited = new HashMap<>();
+        goalInfo = new points[n*n]; 
+
+        this.initial = initial; 
+        this.goal = goal; 
+
+        frontier = new ArrayList<int[][]>();     
+
+        // Build up the coordinates table to speed up Manhattan distance calculation
+        for(int i = 0; i < n; i++)
+        {
+            for(int j = 0; j < n; j++)
+            {
+                goalInfo[goal[i][j]] = new points(i, j); 
+            }
+        }
+    }
+BFS Method
+java
+Copy code
+    // Breadth-First Search (BFS) algorithm
+    public void bfs()
+    {
+        // Reset the state of the solver before starting BFS
+        reset(); 
+
+        // While the solution is not found
+        while(!found_sol)
+        {
+            // Get the current state from the frontier (FIFO, so first element)
+            int cur_state[][] = frontier.get(0); 
+            
+            // Remove the state from the frontier
+            frontier.remove(0); 
+            
+            // Increment the total nodes counter
+            total_nodes++; 
+            
+            // Print the current state
+            System.out.println("Current node:" + total_nodes);
+            printBoard(cur_state); 
+            
+            // Check if the current state is the goal state
+            if(isGoal(cur_state))
+            {
+                // If it is, mark the solution as found and print the result
+                found_sol = true; 
+                System.out.println("Solution reached!");
+                System.out.println("BFS: Nodes traversed: " + total_nodes);
+            }
+            else
+            {
+                // If not, explore the children of the current state
+                create_children(cur_state, -1); 
+            }
+        }
+    }
+Explanation
+Initialization and Reset:
+
+reset(): This method resets the state of the solver, clearing the frontier and visited nodes, and adding the initial state to the frontier.
+Main Loop:
+
+while(!found_sol): The loop continues until a solution is found.
+int cur_state[][] = frontier.get(0): Retrieve the first state from the frontier. This follows the BFS principle of FIFO (First In, First Out).
+frontier.remove(0): Remove the current state from the frontier.
+total_nodes++: Increment the counter for the total number of nodes traversed.
+printBoard(cur_state): Print the current state for debugging or visualization purposes.
+Goal Check:
+
+if(isGoal(cur_state)): Check if the current state matches the goal state.
+found_sol = true: If it does, mark the solution as found.
+System.out.println("Solution reached!");: Print a success message.
+System.out.println("BFS: Nodes traversed: " + total_nodes);: Print the total number of nodes traversed to reach the solution.
+Children Exploration:
+
+create_children(cur_state, -1): If the current state is not the goal state, generate all possible child states (moves) and add them to the frontier if they haven't been visited before.
+BFS Validation
+Frontier Handling: The frontier is handled as a queue (FIFO) by always retrieving and removing the first element (frontier.get(0) and frontier.remove(0)).
+Level Order Expansion: Nodes are expanded level by level. All nodes at a given depth are expanded before moving to the next depth level, ensuring BFS properties.
+State Tracking: The visited map tracks which states have been visited to prevent cycles and redundant work.
+By analyzing the structure and behavior of the bfs method, it is clear that it follows the principles of BFS by using a queue to expand nodes in a breadth-first manner, ensuring all nodes at a given depth are processed before moving to the next depth level. This confirms that the method is indeed implementing the BFS algorithm.
+ */
