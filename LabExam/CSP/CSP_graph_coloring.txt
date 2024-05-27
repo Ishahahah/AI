@@ -1,96 +1,221 @@
-
-CSP Graph Coloring Problem 
-
-package LAB;
 import java.util.Scanner;
+
 public class CSP {
- private static int V; // Number of vertices
+    // Number of vertices
+    private static int V;
 
-	    public static void main(String[] args) {
-	        Scanner scanner = new Scanner(System.in);
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
 
-	        System.out.println("Enter the number of vertices:");
-	        V = scanner.nextInt();
+        // Read number of vertices
+        System.out.println("Enter the number of vertices:");
+        V = scanner.nextInt();
 
-	        boolean[][] graph = new boolean[V][V];
+        // Initialize the adjacency matrix
+        boolean[][] graph = new boolean[V][V];
 
-	        System.out.println("Enter the adjacency matrix of the graph:");
-	        for (int i = 0; i < V; i++) {
-	            for (int j = 0; j < V; j++) {
-	                graph[i][j] = scanner.nextInt() == 1;
-	            }
-	        }
+        // Read the adjacency matrix
+        System.out.println("Enter the adjacency matrix of the graph:");
+        for (int i = 0; i < V; i++) {
+            for (int j = 0; j < V; j++) {
+                graph[i][j] = scanner.nextInt() == 1;  // Convert input to boolean
+            }
+        }
 
-	        System.out.println("Enter the number of colors:");
-	        int m = scanner.nextInt();
+        // Read number of colors
+        System.out.println("Enter the number of colors:");
+        int m = scanner.nextInt();
 
-	        if (!graphColoring(graph, m)) {
-	            System.out.println("Solution does not exist");
-	        }
-	    }
+        // Solve the graph coloring problem
+        if (!graphColoring(graph, m)) {
+            System.out.println("Solution does not exist");
+        }
+    }
 
-	    private static boolean isSafe(int v, boolean[][] graph, int[] color, int c) {
-	        for (int i = 0; i < V; i++) {
-	            if (graph[v][i] && c == color[i]) {
-	                return false;
-	            }
-	        }
-	        return true;
-	    }
+    // Function to check if it's safe to color vertex v with color c
+    private static boolean isSafe(int v, boolean[][] graph, int[] color, int c) {
+        for (int i = 0; i < V; i++) {
+            if (graph[v][i] && c == color[i]) { // If adjacent vertex has the same color
+                return false;
+            }
+        }
+        return true; // Safe to color
+    }
 
-	    private static boolean graphColoringUtil(boolean[][] graph, int m, int[] color, int v) {
-	        if (v == V) {
-	            return true;
-	        }
+    // Recursive utility function to solve the graph coloring problem
+    private static boolean graphColoringUtil(boolean[][] graph, int m, int[] color, int v) {
+        if (v == V) {
+            return true; // All vertices are colored
+        }
 
-	        for (int c = 1; c <= m; c++) {
-	            if (isSafe(v, graph, color, c)) {
-	                color[v] = c;
-	                if (graphColoringUtil(graph, m, color, v + 1)) {
-	                    return true;
-	                }
-	                color[v] = 0; // backtrack
-	            }
-	        }
-	        return false;
-	    }
+        // Try different colors for vertex v
+        for (int c = 1; c <= m; c++) {
+            if (isSafe(v, graph, color, c)) {
+                color[v] = c; // Assign color c to vertex v
 
-	    private static boolean graphColoring(boolean[][] graph, int m) {
-	        int[] color = new int[V];
-	        for (int i = 0; i < V; i++) {
-	            color[i] = 0;
-	        }
+                // Recursively assign colors to the rest of the vertices
+                if (graphColoringUtil(graph, m, color, v + 1)) {
+                    return true;
+                }
 
-	        if (!graphColoringUtil(graph, m, color, 0)) {
-	            return false;
-	        }
+                color[v] = 0; // Backtrack if no valid color assignment
+            }
+        }
+        return false; // If no color can be assigned to this vertex
+    }
 
-	        printSolution(color);
-	        return true;
-	    }
+    // Function to solve the graph coloring problem using backtracking
+    private static boolean graphColoring(boolean[][] graph, int m) {
+        int[] color = new int[V]; // Initialize color array to store colors of vertices
 
-	    private static void printSolution(int[] color) {
-	        System.out.println("Solution Exists: Following are the assigned colors:");
-	        for (int i = 0; i < V; i++) {
-	            System.out.print(" " + color[i] + " ");
-	        }
-	        System.out.println();
-	    }
-	}
+        // Initially, all vertices are unassigned with color 0
+        for (int i = 0; i < V; i++) {
+            color[i] = 0;
+        }
+
+        // Start from the first vertex and solve the problem using backtracking
+        if (!graphColoringUtil(graph, m, color, 0)) {
+            return false; // No solution exists
+        }
+
+        printSolution(color); // Print the solution
+        return true; // Solution found
+    }
+
+    // Function to print the solution
+    private static void printSolution(int[] color) {
+        System.out.println("Solution Exists: Following are the assigned colors:");
+        for (int i = 0; i < V; i++) {
+            System.out.print(" " + color[i] + " ");
+        }
+        System.out.println();
+    }
+}
+
+// OUTPUT
+// Enter the number of vertices:
+// 4
+// Enter the adjacency matrix of the graph:
+// 0 1 1 1
+// 1 0 1 0
+// 1 1 0 1
+// 1 0 1 0
+// Enter the number of colors:
+// 3
+// Solution Exists: Following are the assigned colors:
+//  1  2  3  2 
+
+// === Code Execution Successful ===
 
 
+// Detailed Explanation
+// Imports and Class Declaration:
 
+// import java.util.Scanner; imports the Scanner class for reading input.
+// public class CSP defines the class named CSP.
+// Variable Declaration:
 
-4
+// private static int V; declares a static variable V to hold the number of vertices.
+// Main Method:
 
-Enter the adjacency matrix of the graph:
-0 1 1 1
-1 0 1 0
-1 1 0 1
-1 0 1 0
+// public static void main(String[] args) is the main method where the program starts execution.
+// Scanner scanner = new Scanner(System.in); creates a Scanner object to read input from the user.
+// Reading Number of Vertices:
 
-Enter the number of colors:
-3
+// System.out.println("Enter the number of vertices:"); prompts the user to enter the number of vertices.
+// V = scanner.nextInt(); reads the number of vertices.
+// Reading the Adjacency Matrix:
 
-Solution Exists: Following are the assigned colors:
- 1  2  3  2
+// boolean[][] graph = new boolean[V][V]; initializes a 2D boolean array to store the adjacency matrix.
+// Nested loops read the adjacency matrix values from the user and convert them to boolean.
+// Reading Number of Colors:
+
+// System.out.println("Enter the number of colors:"); prompts the user to enter the number of colors.
+// int m = scanner.nextInt(); reads the number of colors.
+// Solving the Graph Coloring Problem:
+
+// if (!graphColoring(graph, m)) { calls the graphColoring method to solve the problem.
+// If no solution exists, it prints "Solution does not exist".
+// Checking Safety of Color Assignment:
+
+// private static boolean isSafe(int v, boolean[][] graph, int[] color, int c) checks if it’s safe to color vertex v with color c.
+// It ensures no adjacent vertex has the same color.
+// Recursive Utility Function:
+
+// private static boolean graphColoringUtil(boolean[][] graph, int m, int[] color, int v) is the core function that uses recursion and backtracking to solve the problem.
+// If all vertices are colored, it returns true.
+// It tries assigning each color to the current vertex and calls itself recursively for the next vertex.
+// If assigning a color leads to a conflict, it backtracks by resetting the color and tries the next color.
+// Graph Coloring Function:
+
+// private static boolean graphColoring(boolean[][] graph, int m) initializes the color array and starts the coloring process from the first vertex.
+// If no solution is found, it returns false.
+// If a solution is found, it prints the colors assigned to each vertex.
+
+ // Printing the Solution:
+// private static void printSolution(int[] color) prints the colors assigned to each vertex when a solution is found.
+
+// ### How This Code is a Constraint Satisfaction Problem (CSP)
+
+// A **Constraint Satisfaction Problem (CSP)** involves finding a solution to a problem defined by a set of variables, a domain of values for each variable, and a set of constraints that specify allowable combinations of values. Here's how the given graph coloring problem fits into the framework of a CSP:
+
+// 1. **Variables**:
+//     - In the graph coloring problem, the variables are the vertices of the graph. Each vertex needs to be assigned a color.
+
+// 2. **Domains**:
+//     - The domain for each variable (vertex) is the set of possible colors, which in this case are integers from 1 to `m`, where `m` is the number of colors.
+
+// 3. **Constraints**:
+//     - The constraints are that no two adjacent vertices (connected by an edge) can have the same color.
+
+// ### Breakdown of the Code as a CSP
+
+// 1. **Variables**:
+//     - The vertices of the graph are the variables. This is implicitly represented by the iteration over the vertices in the adjacency matrix.
+
+// 2. **Domains**:
+//     - The possible colors for each vertex are stored in the range `1` to `m`.
+
+// 3. **Constraints**:
+//     - The `isSafe` function checks the constraints by ensuring no two adjacent vertices have the same color.
+
+// 4. **Backtracking Algorithm**:
+//     - The `graphColoringUtil` function uses a backtracking algorithm to assign colors to vertices. If assigning a color leads to a conflict, the algorithm backtracks by resetting the color and trying the next available color.
+
+// ### Important Notes on CSP and Graph Coloring
+
+// 1. **Definition of CSP**:
+//     - A CSP is defined by a set of variables, domains for these variables, and constraints between the variables.
+
+// 2. **Graph Coloring as CSP**:
+//     - In graph coloring:
+//         - **Variables**: Vertices of the graph.
+//         - **Domains**: Set of colors available.
+//         - **Constraints**: No two adjacent vertices can have the same color.
+
+// 3. **Backtracking**:
+//     - Backtracking is a general algorithm for finding solutions to some computational problems, notably CSPs. It incrementally builds candidates to the solutions and abandons a candidate ("backtracks") as soon as it determines that this candidate cannot possibly be completed to a valid solution.
+
+// 4. **Recursive Approach**:
+//     - The recursive function `graphColoringUtil` tries to color each vertex, checks if it’s safe to assign the current color, and recursively calls itself to color the next vertex.
+//     - If it finds an assignment that violates the constraints, it backtracks and tries the next color.
+
+// 5. **Complexity**:
+//     - The time complexity of the backtracking solution can be high (exponential in the worst case) because it explores all possible assignments of colors to vertices.
+
+// 6. **Heuristics**:
+//     - To improve the efficiency, heuristics such as the Minimum Remaining Values (MRV), Degree Heuristic, and Least Constraining Value (LCV) can be applied.
+//     - **MRV**: Choose the vertex with the fewest legal colors.
+//     - **Degree Heuristic**: Choose the vertex with the most constraints on remaining variables.
+//     - **LCV**: Choose the color that least constrains the remaining vertices.
+
+// 7. **Applications of Graph Coloring**:
+//     - Timetabling problems.
+//     - Register allocation in compilers.
+//     - Scheduling problems.
+
+// ### Summary
+
+// The given code is a CSP because it defines a problem where vertices of a graph must be colored in such a way that no two adjacent vertices have the same color, using a limited number of colors. It uses a backtracking algorithm to explore all possible color assignments and ensures that the constraints are satisfied.
+
+// By understanding this, you can apply similar CSP techniques to other problems with different variables, domains, and constraints, recognizing the broader applicability of CSPs in fields such as artificial intelligence, operations research, and optimization.
